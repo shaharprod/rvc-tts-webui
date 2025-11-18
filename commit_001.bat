@@ -1,5 +1,9 @@
 @echo off
+echo Adding files...
 git add app.py rmvpe.py requirements.txt
+echo Committing...
 git commit -m "001"
-echo Commit created successfully!
+echo Pushing to GitHub...
+git push
+echo Done!
 
