@@ -631,7 +631,7 @@ if __name__ == "__main__":
                 inbrowser=False,
                 server_name=server_name,
                 server_port=port,
-                share=False,
+                share=enable_share,
                 server_protocol="http"
             )
         except Exception as e2:
