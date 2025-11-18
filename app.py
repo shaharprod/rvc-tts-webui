@@ -599,12 +599,27 @@ if __name__ == "__main__":
     print("\n" + "="*50)
     print("Starting RVC TTS WebUI...")
     print("="*50)
+    
+    # Get port from config or use default
+    port = config.listen_port if hasattr(config, 'listen_port') else 7865
+    
+    # Allow access from network (0.0.0.0 means accessible from any IP)
+    # For localhost only, use "127.0.0.1"
+    server_name = "0.0.0.0"  # Accessible from network
+    
+    print(f"Server will be accessible at:")
+    print(f"  - Local: http://localhost:{port}")
+    print(f"  - Network: http://<your-ip>:{port}")
+    print(f"  - To find your IP, run: ipconfig (Windows) or ifconfig (Linux/Mac)")
+    print("="*50)
+    
     try:
         app.launch(
             inbrowser=True,
-            server_name="127.0.0.1",
-            server_port=7865,
-            share=False
+            server_name=server_name,
+            server_port=port,
+            share=False,  # Set to True for public Gradio share link
+            server_protocol="http"
         )
     except Exception as e:
         print(f"\nError starting server: {e}")
@@ -614,9 +629,10 @@ if __name__ == "__main__":
         try:
             app.launch(
                 inbrowser=False,
-                server_name="127.0.0.1",
-                server_port=7865,
-                share=False
+                server_name=server_name,
+                server_port=port,
+                share=False,
+                server_protocol="http"
             )
         except Exception as e2:
             print(f"\nError: {e2}")
