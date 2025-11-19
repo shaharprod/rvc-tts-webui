@@ -607,9 +607,15 @@ if __name__ == "__main__":
     # For localhost only, use "127.0.0.1"
     server_name = "0.0.0.0"  # Accessible from network
     
+    # Option to create public share link (works like GitHub Pages but via Gradio)
+    # Set to True to get a public URL like: https://xxxxx.gradio.live
+    enable_share = os.getenv("GRADIO_SHARE", "False").lower() == "true"
+    
     print(f"Server will be accessible at:")
     print(f"  - Local: http://localhost:{port}")
     print(f"  - Network: http://<your-ip>:{port}")
+    if enable_share:
+        print(f"  - Public share link will be generated (like GitHub Pages)")
     print(f"  - To find your IP, run: ipconfig (Windows) or ifconfig (Linux/Mac)")
     print("="*50)
     
@@ -618,8 +624,7 @@ if __name__ == "__main__":
             inbrowser=True,
             server_name=server_name,
             server_port=port,
-            share=False,  # Set to True for public Gradio share link
-            server_protocol="http"
+            share=enable_share  # Set to True for public Gradio share link (like GitHub Pages)
         )
     except Exception as e:
         print(f"\nError starting server: {e}")
@@ -631,8 +636,7 @@ if __name__ == "__main__":
                 inbrowser=False,
                 server_name=server_name,
                 server_port=port,
-                share=enable_share,
-                server_protocol="http"
+                share=enable_share
             )
         except Exception as e2:
             print(f"\nError: {e2}")
