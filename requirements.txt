@@ -7,3 +7,6 @@ numpy==1.23.5
 praat-parselmouth==0.4.3
 pyworld==0.3.4
 torchcrepe==0.0.20
+openai>=1.0.0
+google-cloud-texttospeech>=2.0.0
+requests>=2.28.0
