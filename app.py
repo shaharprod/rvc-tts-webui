@@ -699,7 +699,7 @@ Input text ➡[(edge-tts)](https://github.com/rany2/edge-tts)➡ Speech mp3 file
 """
 
 # Create Gradio interface
-with gr.Blocks() as app:
+with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
     gr.Markdown(initial_md)
     with gr.Row():
         with gr.Column():
