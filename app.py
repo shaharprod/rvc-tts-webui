@@ -864,7 +864,7 @@ if __name__ == "__main__":
 
         # Option to create public share link (works like GitHub Pages but via Gradio)
         # Set to True to get a public URL like: https://xxxxx.gradio.live
-        enable_share = os.getenv("GRADIO_SHARE", "False").lower() == "true"
+        enable_share = os.getenv("GRADIO_SHARE", "True").lower() == "true"
 
         print(f"Server will be accessible at:")
         print(f"  - Local: http://localhost:{port}")
