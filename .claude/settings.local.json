@@ -8,7 +8,16 @@
       "Bash(pip cache purge:*)",
       "Bash(pip install:*)",
       "Bash(timeout 30 python:*)",
-      "Bash(timeout 20 python:*)"
+      "Bash(timeout 20 python:*)",
+      "Bash(timeout 15 python:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(tasklist:*)",
+      "Bash(powershell \"Get-Process -Id 34648 | Select-Object ProcessName,Id\")",
+      "Bash(taskkill:*)",
+      "Bash(powershell \"Stop-Process -Id 34648 -Force\")",
+      "Bash(curl:*)",
+      "Bash(cat:*)"
     ]
   }
 }

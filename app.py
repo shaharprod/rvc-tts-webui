@@ -206,7 +206,7 @@ def model_data(model_name):
         raise ValueError(f"No pth file found in {model_root}/{model_name}")
     pth_path = pth_files[0]
     print(f"Loading {pth_path}")
-    cpt = torch.load(pth_path, map_location="cpu")
+    cpt = torch.load(pth_path, map_location="cpu", weights_only=False)
     tgt_sr = cpt["config"][-1]
     cpt["config"][-3] = cpt["weight"]["emb_g.weight"].shape[0]  # n_spk
     if_f0 = cpt.get("f0", 1)
@@ -251,10 +251,34 @@ def model_data(model_name):
 
 def load_hubert():
     global hubert_model
-    models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
-        ["hubert_base.pt"],
-        suffix="",
-    )
+    # Fix for PyTorch 2.6+ weights_only=True default
+    # Patch fairseq's checkpoint_utils to use weights_only=False
+    import fairseq.checkpoint_utils
+    original_load_checkpoint = fairseq.checkpoint_utils.load_checkpoint_to_cpu
+    
+    def patched_load_checkpoint(filename, arg_overrides=None):
+        # Temporarily patch torch.load to use weights_only=False
+        original_torch_load = torch.load
+        def patched_torch_load(*args, **kwargs):
+            kwargs['weights_only'] = False
+            return original_torch_load(*args, **kwargs)
+        torch.load = patched_torch_load
+        try:
+            result = original_load_checkpoint(filename, arg_overrides)
+        finally:
+            torch.load = original_torch_load
+        return result
+    
+    fairseq.checkpoint_utils.load_checkpoint_to_cpu = patched_load_checkpoint
+    
+    try:
+        models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
+            ["hubert_base.pt"],
+            suffix="",
+        )
+    finally:
+        # Restore original function
+        fairseq.checkpoint_utils.load_checkpoint_to_cpu = original_load_checkpoint
     hubert_model = models[0]
     hubert_model = hubert_model.to(config.device)
     if config.is_half:
@@ -674,8 +698,8 @@ This is a text-to-speech webui of RVC models.
 Input text ➡[(edge-tts)](https://github.com/rany2/edge-tts)➡ Speech mp3 file ➡[(RVC)](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)➡ Final output
 """
 
-app = gr.Blocks()
-with app:
+# Create Gradio interface
+with gr.Blocks() as app:
     gr.Markdown(initial_md)
     with gr.Row():
         with gr.Column():
@@ -808,66 +832,18 @@ with app:
             ],
             [info_text, edge_tts_output, tts_output],
         )
-    with gr.Row():
-        examples = gr.Examples(
-            examples_per_page=100,
-            examples=[
-                ["זה משפט ברירת המחדל.", "he-IL-AvriNeural-Male"],
-                ["זהו דמו של המרת טקסט עברי לדיבור. קול נשי.", "he-IL-HilaNeural-Female"],
-                ["これは日本語テキストから音声への変換デモです。", "ja-JP-NanamiNeural-Female"],
-                [
-                    "This is an English text to speech conversation demo.",
-                    "en-US-AriaNeural-Female",
-                ],
-                ["这是一个中文文本到语音的转换演示。", "zh-CN-XiaoxiaoNeural-Female"],
-                ["한국어 텍스트에서 음성으로 변환하는 데모입니다.", "ko-KR-SunHiNeural-Female"],
-                [
-                    "Il s'agit d'une démo de conversion du texte français à la parole.",
-                    "fr-FR-DeniseNeural-Female",
-                ],
-                [
-                    "Dies ist eine Demo zur Umwandlung von Deutsch in Sprache.",
-                    "de-DE-AmalaNeural-Female",
-                ],
-                [
-                    "Tämä on suomenkielinen tekstistä puheeksi -esittely.",
-                    "fi-FI-NooraNeural-Female",
-                ],
-                [
-                    "Это демонстрационный пример преобразования русского текста в речь.",
-                    "ru-RU-SvetlanaNeural-Female",
-                ],
-                [
-                    "Αυτή είναι μια επίδειξη μετατροπής ελληνικού κειμένου σε ομιλία.",
-                    "el-GR-AthinaNeural-Female",
-                ],
-                [
-                    "Esta es una demostración de conversión de texto a voz en español.",
-                    "es-ES-ElviraNeural-Female",
-                ],
-                [
-                    "Questa è una dimostrazione di sintesi vocale in italiano.",
-                    "it-IT-ElsaNeural-Female",
-                ],
-                [
-                    "Esta é uma demonstração de conversão de texto em fala em português.",
-                    "pt-PT-RaquelNeural-Female",
-                ],
-                [
-                    "Це демонстрація тексту до мовлення українською мовою.",
-                    "uk-UA-PolinaNeural-Female",
-                ],
-                [
-                    "هذا عرض توضيحي عربي لتحويل النص إلى كلام.",
-                    "ar-EG-SalmaNeural-Female",
-                ],
-                [
-                    "இது தமிழ் உரையிலிருந்து பேச்சு மாற்ற டெமோ.",
-                    "ta-IN-PallaviNeural-Female",
-                ],
-            ],
-            inputs=[tts_text, tts_voice],
-        )
+    # Examples component removed due to Gradio 3.34.0 compatibility issue
+    # (causes KeyError: 'dataset' in API info endpoint)
+    # with gr.Row():
+    #     examples = gr.Examples(
+    #         examples_per_page=100,
+    #         examples=[
+    #             ["זה משפט ברירת המחדל.", "he-IL-AvriNeural-Male"],
+    #             ["זהו דמו של המרת טקסט עברי לדיבור. קול נשי.", "he-IL-HilaNeural-Female"],
+    #             # ... more examples
+    #         ],
+    #         inputs=[tts_text, tts_voice],
+    #     )
 
 
 if __name__ == "__main__":
@@ -878,18 +854,18 @@ if __name__ == "__main__":
         print(f"Working directory: {os.getcwd()}")
         print(f"Python version: {sys.version}")
         print("="*50)
-        
+
         # Get port from config or use default
         port = config.listen_port if hasattr(config, 'listen_port') else 7865
-        
+
         # Allow access from network (0.0.0.0 means accessible from any IP)
         # For localhost only, use "127.0.0.1"
         server_name = "0.0.0.0"  # Accessible from network
-        
+
         # Option to create public share link (works like GitHub Pages but via Gradio)
         # Set to True to get a public URL like: https://xxxxx.gradio.live
         enable_share = os.getenv("GRADIO_SHARE", "False").lower() == "true"
-        
+
         print(f"Server will be accessible at:")
         print(f"  - Local: http://localhost:{port}")
         print(f"  - Network: http://<your-ip>:{port}")
@@ -897,13 +873,15 @@ if __name__ == "__main__":
             print(f"  - Public share link will be generated (like GitHub Pages)")
         print(f"  - To find your IP, run: ipconfig (Windows) or ifconfig (Linux/Mac)")
         print("="*50)
-        
+
         try:
+            app.queue()
             app.launch(
                 inbrowser=True,
                 server_name=server_name,
                 server_port=port,
-                share=enable_share  # Set to True for public Gradio share link (like GitHub Pages)
+                share=enable_share,  # Set to True for public Gradio share link (like GitHub Pages)
+                debug=True  # Enable debug mode to see server-side errors
             )
         except Exception as e:
             print(f"\nError starting server: {e}")
