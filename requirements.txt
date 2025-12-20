@@ -5,7 +5,7 @@ faiss_cpu==1.13.1
 gradio-client==0.2.10
 gradio==3.38.0
 librosa==0.9.1
-numpy==1.24.3
+numpy>=1.25.0,<2.0
 praat-parselmouth>=0.4.3
 pyworld==0.3.4
 torchcrepe==0.0.20
