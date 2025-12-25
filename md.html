@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מנתח אודיו - עם קלט מיקרופון, סצנוגרמה והקלטה</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* הגדרות פונט גלובליות */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            direction: rtl;
+            text-align: right;
+        }
+        /* עיצוב המיכל המרכזי */
+        .container {
+            max-width: 900px;
+            margin: 2rem auto; 
+            padding: 2rem;
+            background-color: #161b22;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+        }
+        /* עיצוב הכפתורים הראשיים - קומפקטי יותר */
+        .control-section button {
+            transition: background-color 0.2s, transform 0.1s;
+            padding: 0.25rem 0.75rem; 
+            font-size: 0.875rem; 
+        }
+        .control-section button:hover {
+            background-color: #238636;
+        }
+        .control-section button:active {
+            transform: scale(0.98);
+        }
+        /* עיצוב ה-Canvas לוויזואליזר ולספקטרום */
+        #visualizerCanvas, #spectrumCanvas {
+            border: 1px solid #30363d;
+            background-color: #0d1117;
+            border-radius: 6px;
+        }
+        /* עיצוב תיבת הודעות (במקום alert) */
+        #messageBox {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        #messageBox.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* עיצוב הפיידרים */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #a78bfa; 
+            cursor: pointer;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        }
+        /* סגנון לקנבס מד ה-VU */
+        #vuMeterCanvas {
+            border-radius: 4px;
+            background-color: #0d1117;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        
+        .bg-green-500 { background-color: #10b981; }
+        .bg-yellow-500 { background-color: #f59e0b; }
+        .bg-red-500 { background-color: #ef4444; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-6 text-center text-green-400">מנתח אודיו - קלט קובץ ומיקרופון</h1>
+        
+        <!-- תיבת הודעות -->
+        <div id="messageBox" class="p-4 mb-4 text-sm text-yellow-800 bg-yellow-200 rounded-lg shadow-md border border-yellow-300 fixed top-4 left-1/2 transform -translate-x-1/2" role="alert">
+            <span class="font-medium">הודעה:</span> <span id="messageText"></span>
+        </div>
+
+        <!-- פקדי בקרה גלובליים: השתקה והקלטה -->
+        <div class="mt-4 mb-8 p-3 bg-gray-700 rounded-lg border border-gray-600 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 sm:space-x-reverse">
+            <!-- כפתור השתקה -->
+            <button id="muteButton" class="w-full sm:w-auto px-6 py-2 bg-purple-600 text-white font-bold rounded-lg shadow-md hover:bg-purple-700 disabled:opacity-50">
+                השתק פלט רמקול (Mute)
+            </button>
+            
+            <!-- כפתורי הקלטה -->
+            <div class="flex space-x-2 space-x-reverse w-full sm:w-auto">
+                <button id="recordStartButton" class="w-1/2 sm:w-auto px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 disabled:opacity-50" disabled>
+                    התחל הקלטת אודיו
+                </button>
+                <button id="recordStopButton" class="w-1/2 sm:w-auto px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50" disabled>
+                    עצור הקלטה
+                </button>
+            </div>
+        </div>
+
+
+        <!-- בחירת קלט: קובץ אודיו -->
+        <div class="mb-5 p-3 bg-gray-700 rounded-lg border border-gray-600 control-section">
+            <h2 class="text-xl font-semibold mb-3 text-white">אפשרות 1: קובץ אודיו</h2>
+            <label for="audioFile" class="block text-sm font-medium mb-2">בחר קובץ אודיו (MP3, WAV):</label>
+            <input type="file" id="audioFile" accept="audio/*" class="w-full text-sm text-gray-200 border border-gray-600 rounded-lg cursor-pointer bg-gray-600 focus:outline-none">
+            <div class="flex space-x-4 space-x-reverse justify-center mt-3">
+                <button id="playButton" class="bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 disabled:opacity-50" disabled>נגן קובץ</button>
+                <button id="pauseButton" class="bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50" disabled>השהה</button>
+                <button id="stopButton" class="bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 disabled:opacity-50" disabled>עצור</button>
+            </div>
+        </div>
+
+        <!-- בחירת קלט: מיקרופון חי -->
+        <div class="mb-5 p-3 bg-gray-700 rounded-lg border border-gray-600 control-section">
+            <h2 class="text-xl font-semibold mb-3 text-white">אפשרות 2: קלט מיקרופון חי</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- בחירת מיקרופון -->
+                <div>
+                    <label for="micSelect" class="block text-sm font-medium mb-2 text-yellow-300">בחר מיקרופון:</label>
+                    <select id="micSelect" class="w-full p-2 text-sm text-gray-200 bg-gray-600 rounded-lg border border-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <option value="">טוען התקני קלט...</option>
+                    </select>
+                </div>
+
+                <!-- פקד Gain למיקרופון -->
+                <div>
+                    <label for="micGain" class="block text-sm font-medium mb-2 text-purple-300">עוצמת כניסת מיקרופון (Gain):</label>
+                    <input type="range" id="micGain" min="0.1" max="5" value="1" step="0.1" class="w-full h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-xs text-gray-400 mt-1 block">ערך נוכחי: <span id="micGainValueDisplay" class="font-mono text-purple-400">1.00</span></span>
+                </div>
+            </div>
+
+            <button id="startMicButton" class="w-full bg-yellow-500 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-600 mt-3 disabled:opacity-50">התחל קלט מיקרופון</button>
+        </div>
+        
+        <!-- אזור השמעת הקלטה שבוצעה -->
+        <div id="recording-playback-section" class="mt-8 p-4 bg-gray-700 rounded-lg border border-gray-600 hidden">
+            <h2 class="text-xl font-semibold mb-3 text-white">השמעת הקלטה שבוצעה</h2>
+            <audio id="recordedAudioPlayback" controls class="w-full rounded-lg shadow-inner"></audio>
+            <a id="downloadRecordingLink" class="block mt-4 text-center text-sm text-green-400 hover:text-green-300 cursor-pointer" download="recorded_audio.webm">
+                לחץ כאן להורדת הקובץ
+            </a>
+        </div>
+
+
+        <!-- 1. וויזואליזר Peak (תחום זמן) -->
+        <div class="mt-8 p-4 bg-gray-900 rounded-lg border border-gray-700">
+            <h2 class="text-xl font-semibold mb-3 text-orange-400">1. תצוגת גל הקול (Peak)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    <label for="visualizerGain" class="block text-sm font-medium mb-2 text-purple-300">Gain (עוצמה ספציפית לוויזואליזר):</label>
+                    <input type="range" id="visualizerGain" min="0" max="4" value="1" step="0.01" class="w-full h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-xs text-gray-400 mt-1 block">ערך נוכחי: <span id="visualizerGainValueDisplay" class="font-mono text-purple-400">1.00</span></span>
+                </div>
+                <div class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    <label for="visualizerSensitivity" class="block text-sm font-medium mb-2 text-indigo-300">רגישות תצוגת גל הקול (Scale):</label>
+                    <input type="range" id="visualizerSensitivity" min="0.1" max="3" value="1" step="0.05" class="w-full h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-xs text-gray-400 mt-1 block">ערך נוכחי: <span id="visualizerSensitivityValueDisplay" class="font-mono text-indigo-400">1.00</span></span>
+                </div>
+            </div>
+            <canvas id="visualizerCanvas" width="860" height="300" class="w-full h-auto mt-4"></canvas>
+        </div>
+
+        <!-- 2. מד עוצמה מקצועי (Decibel Meter) - VU Meter משופר -->
+        <div class="mt-8 p-4 bg-gray-900 rounded-lg border border-gray-700">
+            <h2 class="text-xl font-semibold mb-3 text-green-400">2. מד עוצמה מקצועי (dB RMS/Peak)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    <label for="dbGain" class="block text-sm font-medium mb-2 text-purple-300">Gain (עוצמה ספציפית למד dB):</label>
+                    <input type="range" id="dbGain" min="0" max="4" value="1" step="0.01" class="w-full h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-xs text-gray-400 mt-1 block">ערך נוכחי: <span id="dbGainValueDisplay" class="font-mono text-purple-400">1.00</span></span>
+                </div>
+                <div class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    <label for="dbMeterSensitivity" class="block text-sm font-medium mb-2 text-indigo-300">רגישות תצוגת המד (Scale):</label>
+                    <input type="range" id="dbMeterSensitivity" min="0.1" max="3" value="1" step="0.05" class="w-full h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-xs text-gray-400 mt-1 block">ערך נוכחי: <span id="dbMeterSensitivityValueDisplay" class="font-mono text-indigo-400">1.00</span></span>
+                </div>
+            </div>
+            <!-- הוספת Canvas למד VU מקצועי -->
+            <div class="flex flex-row space-x-8 space-x-reverse items-start justify-center mt-4 h-96">
+                <canvas id="vuMeterCanvas" width="100" height="384" class="h-full w-24"></canvas>
+                <div class="flex flex-col space-y-4">
+                    <div class="text-xl font-mono text-red-400" id="currentDbPeak">-INF dB</div>
+                    <div class="text-sm font-mono text-gray-400" id="currentDbRms">RMS: -INF dB</div>
+                    <button id="resetPeakButton" class="px-3 py-1 text-xs bg-gray-600 rounded-lg hover:bg-gray-500">איפוס Peak</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. סצנוגרמה (תדר-זמן) -->
+        <div class="mt-8 p-4 bg-gray-900 rounded-lg border border-gray-700">
+            <h2 class="text-xl font-semibold mb-3 text-blue-400">3. סצנוגרמה (תדר-זמן) - נתח ספקטרום גולל</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    <label for="spectrumGain" class="block text-sm font-medium mb-2 text-purple-300">Gain (עוצמה ספציפית לסצנוגרמה):</label>
+                    <input type="range" id="spectrumGain" min="0" max="4" value="1" step="0.01" class="w-full h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-xs text-gray-400 mt-1 block">ערך נוכחי: <span id="spectrumGainValueDisplay" class="font-mono text-purple-400">1.00</span></span>
+                </div>
+                <div class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    <label for="spectrumSensitivity" class="block text-sm font-medium mb-2 text-indigo-300">רגישות תצוגת הסצנוגרמה (Scale):</label>
+                    <input type="range" id="spectrumSensitivity" min="0.1" max="3" value="1" step="0.05" class="w-full h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-xs text-gray-400 mt-1 block">ערך נוכחי: <span id="spectrumSensitivityValueDisplay" class="font-mono text-indigo-400">1.00</span></span>
+                </div>
+            </div>
+            <canvas id="spectrumCanvas" width="860" height="300" class="w-full h-auto mt-4"></canvas>
+            <p class="text-xs text-gray-400 mt-2 text-center">הציר האנכי (Y) הוא תדר. הציר האופקי (X) הוא זמן.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // *** הגדרות גלובליות ואיחלוץ ***
+        let audioContext = null;
+        
+        // צמתי מקור
+        let fileSourceNode = null; 
+        let micSourceNode = null;
+        let micStream = null;
+
+        // צמתי ניתוב ואנליזה
+        let micInputGainNode = null; 
+        let mainInputSplitter = null; // הצומת הראשי שממנו מסתעפים האנלייזרים והרמקול (וגם ההקלטה)
+        let masterGainNode = null; // צומת השתקה
+
+        // הקלטה
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        
+        // צמתי Gain ואנלייזר
+        let visualizerGainNode = null; 
+        let dbGainNode = null; 
+        let spectrumGainNode = null; 
+        
+        let visualizerAnalyser = null;
+        let dbAnalyser = null;
+        let spectrumAnalyser = null; 
+        
+        let visualizerBufferLength, dbBufferLength, spectrumBufferLength;
+        let visualizerDataArray, dbDataArray, spectrumDataArray;
+        
+        let audio;
+        let isPlaying = false;
+        let isMicActive = false;
+
+        // בקרות רגישות גלובליות
+        let currentVisualizerSensitivity = 1.0;
+        let currentDbMeterSensitivity = 1.0;
+        let currentSpectrumSensitivity = 1.0; 
+
+        // לוגיקה חדשה למד VU/Peak
+        const MIN_DB_FLOOR = -96.0;
+        const DB_VISUAL_RANGE = 60; // טווח dB שמוצג (מ--60 עד 0)
+        let peakHoldDb = MIN_DB_FLOOR;
+        let peakHoldTimer = null;
+
+
+        // --- אלמנטים DOM ---
+        const audioFileInput = document.getElementById('audioFile');
+        const playButton = document.getElementById('playButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const stopButton = document.getElementById('stopButton');
+        
+        const micSelect = document.getElementById('micSelect');
+        const startMicButton = document.getElementById('startMicButton');
+        const micGain = document.getElementById('micGain');
+        const micGainValueDisplay = document.getElementById('micGainValueDisplay');
+        
+        // כפתורי הקלטה והשמעה
+        const recordStartButton = document.getElementById('recordStartButton');
+        const recordStopButton = document.getElementById('recordStopButton');
+        const recordedAudioPlayback = document.getElementById('recordedAudioPlayback');
+        const downloadRecordingLink = document.getElementById('downloadRecordingLink');
+        const recordingPlaybackSection = document.getElementById('recording-playback-section');
+
+
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const visualizerCtx = visualizerCanvas.getContext('2d');
+        const visualizerGain = document.getElementById('visualizerGain');
+        const visualizerGainValueDisplay = document.getElementById('visualizerGainValueDisplay');
+        const visualizerSensitivity = document.getElementById('visualizerSensitivity');
+        const visualizerSensitivityValueDisplay = document.getElementById('visualizerSensitivityValueDisplay');
+
+        // אלמנטים חדשים עבור מד VU
+        const vuMeterCanvas = document.getElementById('vuMeterCanvas');
+        const vuMeterCtx = vuMeterCanvas.getContext('2d');
+        const currentDbPeak = document.getElementById('currentDbPeak');
+        const currentDbRms = document.getElementById('currentDbRms');
+        const resetPeakButton = document.getElementById('resetPeakButton');
+
+        const dbGain = document.getElementById('dbGain');
+        const dbGainValueDisplay = document.getElementById('dbGainValueDisplay');
+        const dbMeterSensitivity = document.getElementById('dbMeterSensitivity');
+        const dbMeterSensitivityValueDisplay = document.getElementById('dbMeterSensitivityValueDisplay');
+        
+        const spectrumCanvas = document.getElementById('spectrumCanvas');
+        const spectrumCtx = spectrumCanvas.getContext('2d');
+        const spectrumGain = document.getElementById('spectrumGain');
+        const spectrumGainValueDisplay = document.getElementById('spectrumGainValueDisplay');
+        const spectrumSensitivity = document.getElementById('spectrumSensitivity');
+        const spectrumSensitivityValueDisplay = document.getElementById('spectrumSensitivityValueDisplay');
+        
+        const muteButton = document.getElementById('muteButton');
+        let isMuted = false;
+        
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+
+        // פונקציה להצגת הודעות במקום alert()
+        function showMessage(text, duration = 3000) {
+            messageText.textContent = text;
+            messageBox.classList.add('visible');
+            setTimeout(() => {
+                messageBox.classList.remove('visible');
+            }, duration);
+        }
+
+        // פונקציה להמרת עוצמה (0-255) לצבע RGB עבור הסצנוגרמה
+        function getColorForAmplitude(amplitude) {
+            // רצף צבעים קלאסי לסצנוגרמה: שחור -> כחול -> סגול -> אדום -> לבן
+            const factor = amplitude / 255.0;
+            
+            let R, G, B;
+
+            if (factor < 0.2) { 
+                R = 0; G = 0; B = Math.floor(factor * 5 * 100);
+            } else if (factor < 0.4) { 
+                R = Math.floor((factor - 0.2) * 5 * 100);
+                G = 0;
+                B = Math.floor(255 - (factor - 0.2) * 5 * 55);
+            } else if (factor < 0.7) { 
+                R = 255;
+                G = Math.floor((factor - 0.4) * (1/0.3) * 150);
+                B = 0;
+            } else { 
+                R = 255;
+                G = Math.floor(255 - (1 - factor) * (1/0.3) * 150);
+                B = Math.floor((factor - 0.7) * (1/0.3) * 100);
+            }
+            
+            return [Math.min(255, R), Math.min(255, G), Math.min(255, B)];
+        }
+
+
+        // פונקציה לאיחלוץ AudioContext וצמתי האנליזה
+        function initializeAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // צומת ניתוב מרכזי
+                mainInputSplitter = audioContext.createGain(); 
+                mainInputSplitter.gain.value = 1.0; 
+                
+                // צומת Gain למיקרופון
+                micInputGainNode = audioContext.createGain();
+                micInputGainNode.gain.value = parseFloat(micGain.value);
+                
+                // צומת Gain ראשי להשתקה (Master Gain)
+                masterGainNode = audioContext.createGain();
+                masterGainNode.gain.value = 1.0; 
+                masterGainNode.connect(audioContext.destination);
+                
+                // צמתי Gain נפרדים לכל ענף (מחוברים ל-Splitter)
+                visualizerGainNode = audioContext.createGain();
+                visualizerGainNode.gain.value = parseFloat(visualizerGain.value);
+                mainInputSplitter.connect(visualizerGainNode);
+
+                dbGainNode = audioContext.createGain();
+                dbGainNode.gain.value = parseFloat(dbGain.value);
+                mainInputSplitter.connect(dbGainNode);
+                
+                spectrumGainNode = audioContext.createGain(); 
+                spectrumGainNode.gain.value = parseFloat(spectrumGain.value);
+                mainInputSplitter.connect(spectrumGainNode);
+                
+                // חיבור צמתי ה-Gain לאנלייזרים ול-Master Gain
+                
+                // 1. Peak Analyser (Time Domain)
+                visualizerAnalyser = audioContext.createAnalyser();
+                visualizerAnalyser.fftSize = 2048; 
+                visualizerBufferLength = visualizerAnalyser.frequencyBinCount;
+                visualizerDataArray = new Uint8Array(visualizerBufferLength);
+                visualizerGainNode.connect(visualizerAnalyser);
+                visualizerGainNode.connect(masterGainNode); // חיבור למאסטר Gain (לשמע)
+
+                // 2. RMS Analyser (Time Domain for calculation) - משמש גם לחישוב Peak
+                dbAnalyser = audioContext.createAnalyser();
+                dbAnalyser.fftSize = 2048; 
+                dbBufferLength = dbAnalyser.frequencyBinCount;
+                dbDataArray = new Uint8Array(dbBufferLength);
+                dbGainNode.connect(dbAnalyser);
+                dbGainNode.connect(masterGainNode); // חיבור למאסטר Gain (לשמע)
+
+                // 3. Spectrogram Analyser (Frequency Domain)
+                spectrumAnalyser = audioContext.createAnalyser();
+                spectrumAnalyser.fftSize = 1024; 
+                spectrumAnalyser.minDecibels = -90; 
+                spectrumAnalyser.maxDecibels = -10;
+                spectrumAnalyser.smoothingTimeConstant = 0.85; 
+                spectrumBufferLength = spectrumAnalyser.frequencyBinCount; 
+                spectrumDataArray = new Uint8Array(spectrumBufferLength); 
+                spectrumGainNode.connect(spectrumAnalyser);
+                spectrumGainNode.connect(masterGainNode); // חיבור למאסטר Gain (לשמע)
+
+
+                showMessage('מערכת האודיו אוּתְחְלָה בהצלחה.', 1500);
+            }
+        }
+
+        // --- ניהול כפתור השתקה ---
+        muteButton.addEventListener('click', () => {
+            if (!masterGainNode) {
+                showMessage('יש להתחיל קלט אודיו או לטעון קובץ תחילה.', 1500);
+                return;
+            }
+
+            isMuted = !isMuted;
+            if (isMuted) {
+                masterGainNode.gain.value = 0;
+                muteButton.textContent = 'פלט מושתק (Unmute)';
+                muteButton.classList.remove('bg-purple-600');
+                muteButton.classList.add('bg-red-700');
+                showMessage('הפלט הושתק.', 1000);
+            } else {
+                masterGainNode.gain.value = 1.0;
+                muteButton.textContent = 'השתק פלט רמקול (Mute)';
+                muteButton.classList.remove('bg-red-700');
+                muteButton.classList.add('bg-purple-600');
+                showMessage('הפלט הופעל מחדש.', 1000);
+            }
+        });
+
+
+        // --- ניהול הקלטה ---
+        recordStartButton.addEventListener('click', startRecording);
+        recordStopButton.addEventListener('click', stopRecording);
+
+        function setRecordingButtons(recording) {
+            recordStartButton.disabled = recording || (!isPlaying && !isMicActive);
+            recordStopButton.disabled = !recording;
+            
+            if (recording) {
+                recordStartButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+                recordStartButton.classList.add('bg-gray-500', 'cursor-not-allowed');
+                recordStopButton.classList.remove('bg-blue-600');
+                recordStopButton.classList.add('bg-blue-500');
+            } else {
+                recordStartButton.classList.remove('bg-gray-500', 'cursor-not-allowed');
+                recordStartButton.classList.add('bg-red-600', 'hover:bg-red-700');
+                recordStopButton.classList.remove('bg-blue-500');
+                recordStopButton.classList.add('bg-blue-600');
+            }
+        }
+
+        function startRecording() {
+            if (!mainInputSplitter || (!isPlaying && !isMicActive)) {
+                showMessage("חובה להתחיל קלט אודיו (קובץ או מיקרופון) לפני התחלת הקלטה.", 3000);
+                return;
+            }
+
+            // יצירת יעד ל-MediaStream ללכידת האות מתוך ה-AudioContext
+            const dest = audioContext.createMediaStreamDestination();
+            mainInputSplitter.connect(dest);
+            
+            mediaRecorder = new MediaRecorder(dest.stream);
+            recordedChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                recordedChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(recordedChunks, { 'type' : 'audio/webm' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // הצגת הנגן והלינק להורדה
+                recordedAudioPlayback.src = audioUrl;
+                recordedAudioPlayback.controls = true;
+                downloadRecordingLink.href = audioUrl;
+                recordingPlaybackSection.classList.remove('hidden');
+
+                isRecording = false;
+                setRecordingButtons(false);
+                showMessage("ההקלטה הסתיימה ואושרה להשמעה.", 3000);
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            setRecordingButtons(true);
+            showMessage("הקלטה החלה...", 2000);
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                showMessage("עוצר הקלטה ומעבד קובץ...", 2000);
+            }
+        }
+
+        // --- ניהול התקני מיקרופון ---
+        async function getMicrophones() {
+            try {
+                // נדרשת גישה כדי לקבל את רשימת ההתקנים
+                await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); 
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                
+                const mics = devices.filter(device => device.kind === 'audioinput');
+                
+                micSelect.innerHTML = '';
+                if (mics.length === 0) {
+                    micSelect.innerHTML = '<option value="">לא נמצאו התקני מיקרופון</option>';
+                    startMicButton.disabled = true;
+                    return;
+                }
+
+                mics.forEach((mic, index) => {
+                    const option = document.createElement('option');
+                    option.value = mic.deviceId;
+                    option.textContent = mic.label || `מיקרופון ${index + 1}`;
+                    micSelect.appendChild(option);
+                });
+                startMicButton.disabled = false;
+                recordStartButton.disabled = false; 
+
+            } catch (error) {
+                console.error("שגיאה בגישה למיקרופון או בהצגת התקנים:", error);
+                micSelect.innerHTML = '<option value="">שגיאה: הרשאה נדחתה או אין תמיכה</option>';
+                startMicButton.disabled = true;
+                recordStartButton.disabled = true;
+                showMessage("שגיאה בגישה למיקרופון. ודא שנתת הרשאה.", 5000);
+            }
+        }
+
+        function disconnectCurrentSource() {
+            if (fileSourceNode) {
+                fileSourceNode.disconnect();
+                fileSourceNode = null;
+            }
+            if (micSourceNode) {
+                micSourceNode.disconnect();
+                micSourceNode = null;
+            }
+            if (micStream) {
+                micStream.getTracks().forEach(track => track.stop());
+                micStream = null;
+            }
+            
+            isPlaying = false;
+            isMicActive = false;
+            recordStartButton.disabled = true;
+            recordStopButton.disabled = true;
+        }
+
+        async function startMicrophone() {
+            initializeAudioContext();
+            disconnectCurrentSource(); 
+
+            try {
+                const deviceId = micSelect.value;
+                const constraints = { audio: { deviceId: deviceId ? { exact: deviceId } : undefined } };
+
+                micStream = await navigator.mediaDevices.getUserMedia(constraints);
+                micSourceNode = audioContext.createMediaStreamSource(micStream);
+                
+                // ניתוב: MicSource -> MicInputGainNode -> MainInputSplitter
+                micSourceNode.connect(micInputGainNode);
+                micInputGainNode.connect(mainInputSplitter);
+
+                isMicActive = true;
+                playButton.disabled = true;
+                pauseButton.disabled = true;
+                stopButton.disabled = true;
+                startMicButton.textContent = 'עצור מיקרופון';
+                startMicButton.classList.remove('bg-yellow-500');
+                startMicButton.classList.add('bg-red-500');
+                recordStartButton.disabled = isRecording;
+                showMessage(`קלט מיקרופון הופעל: ${micSelect.options[micSelect.selectedIndex].textContent}`, 2000);
+                draw();
+            } catch (error) {
+                console.error("שגיאה בהפעלת מיקרופון:", error);
+                showMessage("לא ניתן להתחיל קלט מיקרופון. ודא שנתת הרשאה.", 5000);
+                startMicButton.textContent = 'התחל קלט מיקרופון';
+                startMicButton.classList.remove('bg-red-500');
+                startMicButton.classList.add('bg-yellow-500');
+                recordStartButton.disabled = true;
+            }
+        }
+
+        function stopMicrophone() {
+            disconnectCurrentSource();
+            startMicButton.textContent = 'התחל קלט מיקרופון';
+            startMicButton.classList.remove('bg-red-500');
+            startMicButton.classList.add('bg-yellow-500');
+            showMessage('קלט מיקרופון הופסק.', 1500);
+            // איפוס תצוגה חזותית
+            visualizerCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+            spectrumCtx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+            vuMeterCtx.clearRect(0, 0, vuMeterCanvas.width, vuMeterCanvas.height); 
+            currentDbRms.textContent = 'RMS: -INF dB';
+            currentDbPeak.textContent = '-INF dB';
+            peakHoldDb = MIN_DB_FLOOR;
+
+            setRecordingButtons(false);
+        }
+
+        // --- לוגיקת טעינת קובץ ואירועי בקרה ---
+        audioFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) { playButton.disabled = true; return; }
+            
+            disconnectCurrentSource(); 
+            initializeAudioContext();
+            
+            if (audio) { audio.pause(); audio.src = ''; }
+
+            audio = new Audio(URL.createObjectURL(file));
+            audio.crossOrigin = "anonymous"; 
+
+            fileSourceNode = audioContext.createMediaElementSource(audio);
+            fileSourceNode.connect(mainInputSplitter);
+
+            playButton.disabled = false;
+            pauseButton.disabled = true;
+            stopButton.disabled = true;
+            startMicButton.disabled = false; 
+
+            showMessage(`קובץ "${file.name}" נטען. לחץ נגן קובץ.`, 2000);
+            setRecordingButtons(false); 
+
+            audio.onended = () => {
+                isPlaying = false;
+                playButton.disabled = false;
+                pauseButton.disabled = true;
+                stopButton.disabled = true;
+                startMicButton.disabled = false;
+                setRecordingButtons(false);
+                showMessage('הנגינה הסתיימה.', 1500);
+            };
+        });
+
+        playButton.addEventListener('click', () => {
+            if (audio && audioContext) {
+                if (audioContext.state === 'suspended') { audioContext.resume(); }
+                if (isMicActive) { stopMicrophone(); }
+
+                audio.play();
+                isPlaying = true;
+                playButton.disabled = true;
+                pauseButton.disabled = false;
+                stopButton.disabled = false;
+                startMicButton.disabled = true; 
+                recordStartButton.disabled = isRecording;
+                showMessage('מנגן קובץ...', 1500);
+                draw(); 
+            }
+        });
+
+        pauseButton.addEventListener('click', () => {
+            if (audio) {
+                audio.pause();
+                isPlaying = false;
+                playButton.disabled = false;
+                pauseButton.disabled = true;
+                startMicButton.disabled = false; 
+                recordStartButton.disabled = true;
+                showMessage('הושהה.', 1500);
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                isPlaying = false;
+                playButton.disabled = false;
+                pauseButton.disabled = true;
+                stopButton.disabled = true;
+                startMicButton.disabled = false;
+                recordStartButton.disabled = true;
+                // איפוס תצוגה
+                visualizerCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+                spectrumCtx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+                vuMeterCtx.clearRect(0, 0, vuMeterCanvas.width, vuMeterCanvas.height); 
+                currentDbRms.textContent = 'RMS: -INF dB';
+                currentDbPeak.textContent = '-INF dB';
+                peakHoldDb = MIN_DB_FLOOR;
+
+                showMessage('עצר.', 1500);
+            }
+        });
+        
+        startMicButton.addEventListener('click', () => {
+            if (isMicActive) {
+                stopMicrophone();
+            } else {
+                if (isPlaying) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    isPlaying = false;
+                    playButton.disabled = false;
+                    pauseButton.disabled = true;
+                    stopButton.disabled = true;
+                }
+                startMicrophone();
+            }
+        });
+
+        resetPeakButton.addEventListener('click', () => {
+            peakHoldDb = MIN_DB_FLOOR;
+            currentDbPeak.textContent = '-INF dB';
+            if (peakHoldTimer) {
+                clearTimeout(peakHoldTimer);
+                peakHoldTimer = null;
+            }
+            showMessage('Peak Hold אופס.', 1000);
+        });
+
+
+        // --- לוגיקת עדכון פקדים ופיידרים ---
+        function handleControlUpdate(id, value) {
+            const floatValue = parseFloat(value);
+            let displayElement;
+
+            switch (id) {
+                case 'micGain':
+                    displayElement = micGainValueDisplay;
+                    if (micInputGainNode) micInputGainNode.gain.value = floatValue;
+                    break;
+                case 'visualizerGain':
+                    displayElement = visualizerGainValueDisplay;
+                    if (visualizerGainNode) visualizerGainNode.gain.value = floatValue;
+                    break;
+                case 'dbGain':
+                    displayElement = dbGainValueDisplay;
+                    if (dbGainNode) dbGainNode.gain.value = floatValue;
+                    break;
+                case 'spectrumGain':
+                    displayElement = spectrumGainValueDisplay;
+                    if (spectrumGainNode) spectrumGainNode.gain.value = floatValue;
+                    break;
+                
+                case 'visualizerSensitivity':
+                    displayElement = visualizerSensitivityValueDisplay;
+                    currentVisualizerSensitivity = floatValue;
+                    break;
+                case 'dbMeterSensitivity':
+                    displayElement = dbMeterSensitivityValueDisplay;
+                    currentDbMeterSensitivity = floatValue;
+                    break;
+                case 'spectrumSensitivity':
+                    displayElement = spectrumSensitivityValueDisplay;
+                    currentSpectrumSensitivity = floatValue;
+                    break;
+                default:
+                    return;
+            }
+
+            if (displayElement) {
+                displayElement.textContent = floatValue.toFixed(2);
+            }
+        }
+
+        document.querySelectorAll('input[type="range"]').forEach(control => {
+            control.addEventListener('input', (e) => {
+                handleControlUpdate(e.target.id, e.target.value);
+            });
+        });
+
+
+        // *** ציור מד VU המקצועי (חדש) ***
+        function drawVUMeter(dbValue, peakValue) {
+            const V_WIDTH = vuMeterCanvas.width;
+            const V_HEIGHT = vuMeterCanvas.height;
+            const PADDING = 4;
+            const BAR_WIDTH = V_WIDTH - 2 * PADDING - 20; // רוחב פס המדידה
+
+            vuMeterCtx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+            vuMeterCtx.fillStyle = '#0d1117';
+            vuMeterCtx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+            const METER_LEFT = PADDING;
+            const METER_RIGHT = METER_LEFT + BAR_WIDTH;
+
+            // טווח dB לציור (מ--60dB עד 0dB)
+            const MIN_DRAW_DB = -60;
+            const MAX_DRAW_DB = 0;
+            const DB_RANGE = MAX_DRAW_DB - MIN_DRAW_DB;
+
+            // פונקציה להמרת ערך dB לגובה בפיקסלים (מלמטה למעלה)
+            function dbToY(db) {
+                const dbCapped = Math.max(MIN_DRAW_DB, Math.min(MAX_DRAW_DB, db));
+                const normalizedDb = (dbCapped - MIN_DRAW_DB) / DB_RANGE; // 0 ל-1
+                return V_HEIGHT - PADDING - (normalizedDb * (V_HEIGHT - 2 * PADDING));
+            }
+            
+            // גובה הבר
+            const barY = dbToY(dbValue);
+            const barHeight = (V_HEIGHT - PADDING) - barY;
+
+            // 1. ציור אזורי צבע קבועים (רקע)
+            // אדום (מעל -3dB)
+            vuMeterCtx.fillStyle = 'rgba(239, 68, 68, 0.2)'; // אדום חלש
+            vuMeterCtx.fillRect(METER_LEFT, dbToY(-3), BAR_WIDTH, dbToY(0) - dbToY(-3));
+            
+            // צהוב (מ--10dB עד -3dB)
+            vuMeterCtx.fillStyle = 'rgba(245, 158, 11, 0.2)'; // צהוב חלש
+            vuMeterCtx.fillRect(METER_LEFT, dbToY(-10), BAR_WIDTH, dbToY(-3) - dbToY(-10));
+
+            // ירוק (מ--60dB עד -10dB)
+            vuMeterCtx.fillStyle = 'rgba(16, 185, 129, 0.2)'; // ירוק חלש
+            vuMeterCtx.fillRect(METER_LEFT, PADDING, BAR_WIDTH, dbToY(-10) - PADDING); 
+
+
+            // 2. ציור הבר הדינמי (העוצמה הנוכחית)
+            let color;
+            if (dbValue >= -3) { color = '#ef4444'; } // אדום
+            else if (dbValue >= -10) { color = '#f59e0b'; } // צהוב
+            else { color = '#10b981'; } // ירוק
+
+            vuMeterCtx.fillStyle = color;
+            vuMeterCtx.fillRect(METER_LEFT, barY, BAR_WIDTH, barHeight);
+
+
+            // 3. ציור סמן Peak Hold
+            const peakY = dbToY(peakValue);
+            vuMeterCtx.fillStyle = '#f87171'; // ורוד-אדום בהיר
+            vuMeterCtx.fillRect(METER_LEFT, peakY, BAR_WIDTH, 2);
+            
+
+            // 4. ציור סימוני dB (מספרים)
+            vuMeterCtx.fillStyle = '#c9d1d9'; 
+            vuMeterCtx.font = '10px Inter';
+            vuMeterCtx.textAlign = 'left';
+
+            const dbMarks = [0, -3, -6, -10, -15, -20, -30, -40, -50, -60];
+
+            dbMarks.forEach(db => {
+                // הצגה רק אם בטווח התצוגה
+                if (db >= MIN_DRAW_DB) {
+                    const y = dbToY(db);
+                    vuMeterCtx.fillText(db === 0 ? '0' : String(db), METER_RIGHT + 2, y + 4); 
+                    // קו קטן על הפס
+                    vuMeterCtx.strokeStyle = '#30363d';
+                    vuMeterCtx.beginPath();
+                    vuMeterCtx.moveTo(METER_LEFT - 2, y);
+                    vuMeterCtx.lineTo(METER_LEFT + BAR_WIDTH + 2, y);
+                    vuMeterCtx.stroke();
+                }
+            });
+        }
+
+
+        // *** לולאת רינדור וניתוח ***
+        function draw() {
+            if (!isPlaying && !isMicActive) {
+                return;
+            }
+
+            requestAnimationFrame(draw);
+            
+            // קבלת נתונים מכל ענף אנליזה
+            visualizerAnalyser.getByteTimeDomainData(visualizerDataArray);
+            dbAnalyser.getByteTimeDomainData(dbDataArray);
+            spectrumAnalyser.getByteFrequencyData(spectrumDataArray); 
+
+            
+            // --- 1. חישוב מד dB (RMS & Peak) ---
+            
+            // 1.1. חישוב RMS
+            let sumOfSquares = 0;
+            let peakSample = 0;
+            const centerValue = 128; 
+            const dbBufferLength = dbDataArray.length;
+            
+            for (let i = 0; i < dbBufferLength; i++) {
+                const sample = dbDataArray[i] - centerValue; 
+                sumOfSquares += sample * sample;
+                peakSample = Math.max(peakSample, Math.abs(sample)); // מציאת המקסימום המוחלט
+            }
+
+            const meanSquare = sumOfSquares / dbBufferLength;
+            const rmsValue = Math.sqrt(meanSquare);
+            
+            const NOISE_RMS_THRESHOLD = 0.01; 
+
+            let currentRmsDb;
+            if (rmsValue < NOISE_RMS_THRESHOLD) { 
+                currentRmsDb = MIN_DB_FLOOR;
+            } else {
+                currentRmsDb = 20 * Math.log10(rmsValue / centerValue);
+            }
+            
+            let currentPeakDb;
+            if (peakSample < NOISE_RMS_THRESHOLD) { 
+                currentPeakDb = MIN_DB_FLOOR;
+            } else {
+                 // 128 הוא הערך המקסימלי של ה-peak
+                currentPeakDb = 20 * Math.log10(peakSample / centerValue); 
+            }
+
+            // 1.2. יישום Peak Hold עם נסיגה איטית
+            const decayRate = 0.005; // קצב נסיגת ה-Peak
+            
+            if (currentPeakDb > peakHoldDb) {
+                peakHoldDb = currentPeakDb;
+                if (peakHoldTimer) clearTimeout(peakHoldTimer);
+                peakHoldTimer = setTimeout(() => {
+                    // התחלת נסיגה לאחר כמה שניות
+                    function decayPeak() {
+                        if (peakHoldDb > currentPeakDb) {
+                            peakHoldDb = Math.max(currentRmsDb, peakHoldDb - decayRate);
+                            if (peakHoldDb > MIN_DB_FLOOR) {
+                                peakHoldTimer = setTimeout(decayPeak, 50);
+                            } else {
+                                peakHoldDb = MIN_DB_FLOOR;
+                                peakHoldTimer = null;
+                            }
+                        } else {
+                            peakHoldDb = currentPeakDb;
+                        }
+                        currentDbPeak.textContent = `${Math.max(MIN_DB_FLOOR, peakHoldDb).toFixed(2)} dB`;
+                    }
+                    decayPeak();
+                }, 1000); // מחזיק שניה לפני נסיגה
+            }
+            
+            // עדכון Peak Hold מיידי:
+            peakHoldDb = Math.max(peakHoldDb, currentPeakDb);
+            
+            
+            const dbRmsCapped = Math.max(MIN_DB_FLOOR, Math.min(0, currentRmsDb));
+            const dbPeakCapped = Math.max(MIN_DB_FLOOR, Math.min(0, peakHoldDb));
+
+            
+            // --- 2. ציור מד VU המקצועי ---
+            // יישום רגישות התצוגה
+            const rmsValueForMeter = dbRmsCapped * currentDbMeterSensitivity;
+            const peakValueForMeter = dbPeakCapped * currentDbMeterSensitivity;
+            
+            drawVUMeter(rmsValueForMeter, peakValueForMeter);
+            
+            currentDbRms.textContent = `RMS: ${dbRmsCapped.toFixed(2)} dB`;
+            currentDbPeak.textContent = `${dbPeakCapped.toFixed(2)} dB`;
+
+
+            // --- 3. ציור גל הקול ב-Canvas (Peak) ---
+            const V_WIDTH = visualizerCanvas.width;
+            const V_HEIGHT = visualizerCanvas.height;
+            const V_HALF_HEIGHT = V_HEIGHT / 2;
+
+            visualizerCtx.fillStyle = 'rgb(13, 17, 23)'; 
+            visualizerCtx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+            visualizerCtx.lineWidth = 2;
+            visualizerCtx.strokeStyle = 'rgb(255, 128, 0)'; 
+            visualizerCtx.beginPath();
+
+            let sliceWidth = V_WIDTH * 1.0 / visualizerBufferLength;
+            let x = 0;
+            
+            for(let i = 0; i < visualizerBufferLength; i++) {
+                let normalized = visualizerDataArray[i] / 255.0; 
+                let centered = normalized - 0.5;
+                let scaled = centered * currentVisualizerSensitivity; 
+                let v = scaled + 0.5;
+                let y = v * V_HEIGHT;
+
+                if(i === 0) {
+                    visualizerCtx.moveTo(x, y);
+                } else {
+                    visualizerCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            visualizerCtx.lineTo(V_WIDTH, V_HALF_HEIGHT);
+            visualizerCtx.stroke();
+
+
+            // --- 4. ציור סצנוגרמה (Spectrogram) ---
+            const S_WIDTH = spectrumCanvas.width;
+            const S_HEIGHT = spectrumCanvas.height;
+            const dataLength = spectrumBufferLength; 
+
+            // 1. גלילה: הסטת כל התוכן פיקסל אחד שמאלה
+            spectrumCtx.drawImage(spectrumCanvas, 1, 0, S_WIDTH - 1, S_HEIGHT, 0, 0, S_WIDTH - 1, S_HEIGHT);
+
+            // 2. ציור שורת הנתונים החדשה בעמודה הימנית ביותר (S_WIDTH - 1)
+            const binHeight = S_HEIGHT / dataLength; 
+
+            for (let i = 0; i < dataLength; i++) {
+                let amplitude = spectrumDataArray[i];
+                
+                amplitude *= currentSpectrumSensitivity;
+                amplitude = Math.min(255, amplitude);
+                amplitude = Math.max(0, amplitude);
+
+                const [r, g, b] = getColorForAmplitude(amplitude);
+
+                const y = S_HEIGHT - ((i + 1) * binHeight); 
+                
+                spectrumCtx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                
+                spectrumCtx.fillRect(S_WIDTH - 1, y, 1, binHeight);
+            }
+        }
+        
+        // --- אתחול ראשוני ---
+        window.onload = () => {
+            getMicrophones();
+            // הפעלת האודיו קונטקסט על ידי פעולת משתמש ראשונית
+            document.body.addEventListener('click', initializeAudioContext, { once: true });
+            setRecordingButtons(false); 
+        };
+    </script>
+</body>
+</html>
