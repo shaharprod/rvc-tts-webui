@@ -564,44 +564,98 @@ def download_and_extract_models():
     print(f"Downloading models from Google Drive ID: {gdrive_id}")
 
     try:
-        # Google Drive download URL - try direct download first
-        url = f"https://drive.google.com/uc?id={gdrive_id}&export=download"
+        # Try different Google Drive download methods
+        print(f"Attempting to download from Google Drive ID: {gdrive_id}")
+
+        # Method 1: Direct download
+        url = f"https://drive.google.com/uc?id={gdrive_id}&export=download&confirm=t"
+        print(f"Trying URL: {url}")
 
         print("Downloading zip file...")
-        # Set up request with user agent to avoid issues
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as response:
-            content = response.read()
-            with open(zip_path, 'wb') as f:
-                f.write(content)
-        print(f"Downloaded {len(content)} bytes")
+        # Set up request with user agent and cookies to avoid issues
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            }
+        )
 
-        # Check if it's actually a zip file
-        if len(content) < 100:
+        try:
+            with urllib.request.urlopen(req) as response:
+                content = response.read()
+                with open(zip_path, 'wb') as f:
+                    f.write(content)
+            print(f"Downloaded {len(content)} bytes")
+        except Exception as e:
+            print(f"Direct download failed: {e}")
+            # Method 2: Try without confirm=t
+            print("Trying alternative download method...")
+            url2 = f"https://drive.google.com/uc?id={gdrive_id}&export=download"
+            req2 = urllib.request.Request(url2, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req2) as response:
+                content = response.read()
+                with open(zip_path, 'wb') as f:
+                    f.write(content)
+            print(f"Downloaded {len(content)} bytes with alternative method")
+
+        # Check if it's actually a zip file or an error page
+        if len(content) < 1000:  # Error pages are usually small
             print("Warning: Downloaded content is too small, might be an error page")
-            print(f"Content preview: {content[:200]}")
+            print(f"Content preview: {content[:500].decode('utf-8', errors='ignore')}")
             return
 
-        print("Download completed")
+        # Check if content starts with ZIP magic bytes
+        if not content.startswith(b'PK'):
+            print("Warning: Downloaded content doesn't appear to be a ZIP file")
+            print(f"Content starts with: {content[:50]}")
+            return
+
+        print("Download completed successfully")
 
         print("Extracting zip file...")
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            # List contents before extraction
-            zip_contents = zip_ref.namelist()
-            print(f"Zip contents: {zip_contents}")
-            zip_ref.extractall(model_root)
-        print("Extraction completed")
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                # List contents before extraction
+                zip_contents = zip_ref.namelist()
+                print(f"Zip contains {len(zip_contents)} files/folders:")
+                for item in zip_contents[:10]:  # Show first 10 items
+                    print(f"  - {item}")
+                if len(zip_contents) > 10:
+                    print(f"  ... and {len(zip_contents) - 10} more items")
 
-        # Verify extraction
-        extracted_files = []
-        for root, dirs, files in os.walk(model_root):
-            for file in files:
-                extracted_files.append(os.path.join(root, file))
-        print(f"Extracted files: {extracted_files}")
+                # Extract all files
+                zip_ref.extractall(model_root)
+            print("Extraction completed successfully")
+        except zipfile.BadZipFile as e:
+            print(f"Error: Downloaded file is not a valid ZIP file: {e}")
+            return
+        except Exception as e:
+            print(f"Error during extraction: {e}")
+            return
 
-        # Remove the zip file
-        os.remove(zip_path)
-        print("Cleaned up zip file")
+        # Verify extraction by checking if weights directory has subdirectories
+        try:
+            extracted_items = os.listdir(model_root)
+            subdirs = [d for d in extracted_items if os.path.isdir(os.path.join(model_root, d))]
+            print(f"Found {len(subdirs)} model directories: {subdirs}")
+
+            if not subdirs:
+                print("Warning: No model directories found after extraction")
+                print(f"All extracted items: {extracted_items}")
+        except Exception as e:
+            print(f"Error checking extracted files: {e}")
+
+        # Clean up
+        try:
+            os.remove(zip_path)
+            print("Cleaned up zip file")
+        except Exception as e:
+            print(f"Warning: Could not remove zip file: {e}")
 
         # List extracted models
         extracted_models = [d for d in os.listdir(model_root) if os.path.isdir(os.path.join(model_root, d))]
