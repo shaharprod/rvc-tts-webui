@@ -534,7 +534,63 @@ sample_sentences = {
     "Turkish": "Merhaba, bu Türkçe bir örnek cümledir.",
     "Ukrainian": "Привіт, це зразок речення українською.",
     "Vietnamese": "Xin chào, đây là một câu mẫu bằng tiếng Việt.",
-}
+import zipfile
+
+# Function to download and extract models from Google Drive
+def download_and_extract_models():
+    """Download models from Google Drive if GDRIVE_ID is set"""
+    gdrive_id = os.getenv("GDRIVE_ID")
+    if not gdrive_id:
+        print("No GDRIVE_ID environment variable set, skipping model download")
+        return
+
+    model_root = "weights"
+    zip_path = "models.zip"
+
+    # Create weights directory if it doesn't exist
+    os.makedirs(model_root, exist_ok=True)
+
+    # Check if models already exist
+    try:
+        existing_models = [d for d in os.listdir(model_root) if os.path.isdir(os.path.join(model_root, d))]
+        if existing_models:
+            print(f"Models already exist in {model_root}: {existing_models}")
+            return
+    except:
+        pass
+
+    print(f"Downloading models from Google Drive ID: {gdrive_id}")
+
+    try:
+        # Google Drive download URL
+        url = f"https://drive.google.com/uc?id={gdrive_id}&export=download"
+
+        print("Downloading zip file...")
+        urllib.request.urlretrieve(url, zip_path)
+        print("Download completed")
+
+        print("Extracting zip file...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(model_root)
+        print("Extraction completed")
+
+        # Remove the zip file
+        os.remove(zip_path)
+        print("Cleaned up zip file")
+
+        # List extracted models
+        extracted_models = [d for d in os.listdir(model_root) if os.path.isdir(os.path.join(model_root, d))]
+        print(f"Extracted models: {extracted_models}")
+
+    except Exception as e:
+        print(f"Error downloading/extracting models: {e}")
+        import traceback
+        traceback.print_exc()
+        # Don't fail the app startup if download fails
+        print("Continuing without models...")
+
+# Download models from Google Drive if configured
+download_and_extract_models()
 
 model_root = "weights"
 try:

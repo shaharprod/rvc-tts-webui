@@ -69,6 +69,19 @@ venv\Scripts\activate
 pip install -r requirements.txt --upgrade
 ```
 
+## Railway Deployment
+
+To deploy on Railway with your RVC models:
+
+1. Upload your `weights/` folder as a ZIP file to Google Drive
+2. Get the Google Drive file ID from the share link (the part after `id=` in the URL)
+3. In Railway dashboard, go to your project → Variables
+4. Add environment variable: `GDRIVE_ID` = your Google Drive file ID
+5. Deploy - the app will automatically download and extract your models
+
+Example Google Drive share link: `https://drive.google.com/file/d/1ABC123.../view?usp=sharing`
+The ID would be: `1ABC123...`
+
 ## Troubleshooting
 
 ```
