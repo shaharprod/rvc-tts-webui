@@ -1,0 +1,20 @@
+# Files to ignore during Railway deployment
+.git/
+.gitignore
+README.md
+*.md
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tmp
+node_modules/
+.cache/
+dist/
+build/

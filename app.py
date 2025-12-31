@@ -1229,8 +1229,13 @@ if __name__ == "__main__":
         print(f"Python version: {sys.version}")
         print("="*50)
 
+        # Railway environment detection
+        is_railway = os.getenv("RAILWAY_ENVIRONMENT") is not None or os.getenv("RAILWAY_PROJECT_ID") is not None
+        print(f"Railway environment detected: {is_railway}")
+
         # Get port from environment (Railway) or config or use default
         port = int(os.getenv("PORT", config.listen_port if hasattr(config, 'listen_port') else 7865))
+        print(f"Using port: {port}")
 
         # Allow access from network (0.0.0.0 means accessible from any IP)
         # For localhost only, use "127.0.0.0"
@@ -1241,19 +1246,30 @@ if __name__ == "__main__":
         enable_share = False
 
         print(f"Server will be accessible at:")
-        print(f"  - Railway URL: https://your-railway-app.railway.app")
+        if is_railway:
+            print(f"  - Railway URL will be generated automatically")
+        else:
+            print(f"  - Local: http://localhost:{port}")
         print(f"  - Port: {port}")
         print("="*50)
 
         try:
+            print("Initializing Gradio app...")
             app.queue()
+            print("Launching server...")
             app.launch(
                 inbrowser=False,  # Disable browser opening for Railway
                 server_name=server_name,
                 server_port=port,
                 share=enable_share,  # Disabled for Railway
-                debug=True  # Enable debug mode to see server-side errors
+                debug=is_railway,  # Enable debug only for Railway to see logs
+                show_error=True  # Show errors in Railway logs
             )
+            print("Server launched successfully!")
+        except Exception as e:
+            print(f"\nError starting server: {e}")
+            import traceback
+            traceback.print_exc()
         except Exception as e:
             print(f"\nError starting server: {e}")
             import traceback
