@@ -1229,32 +1229,29 @@ if __name__ == "__main__":
         print(f"Python version: {sys.version}")
         print("="*50)
 
-        # Get port from config or use default
-        port = config.listen_port if hasattr(config, 'listen_port') else 7865
+        # Get port from environment (Railway) or config or use default
+        port = int(os.getenv("PORT", config.listen_port if hasattr(config, 'listen_port') else 7865))
 
         # Allow access from network (0.0.0.0 means accessible from any IP)
-        # For localhost only, use "127.0.0.1"
+        # For localhost only, use "127.0.0.0"
         server_name = "0.0.0.0"  # Accessible from network
 
-        # Option to create public share link (works like GitHub Pages but via Gradio)
-        # Set to True to get a public URL like: https://xxxxx.gradio.live
-        enable_share = os.getenv("GRADIO_SHARE", "True").lower() == "true"
+        # Disable share for Railway (Railway provides its own URL)
+        # For Railway deployment, always disable share
+        enable_share = False
 
         print(f"Server will be accessible at:")
-        print(f"  - Local: http://localhost:{port}")
-        print(f"  - Network: http://<your-ip>:{port}")
-        if enable_share:
-            print(f"  - Public share link will be generated (like GitHub Pages)")
-        print(f"  - To find your IP, run: ipconfig (Windows) or ifconfig (Linux/Mac)")
+        print(f"  - Railway URL: https://your-railway-app.railway.app")
+        print(f"  - Port: {port}")
         print("="*50)
 
         try:
             app.queue()
             app.launch(
-                inbrowser=True,
+                inbrowser=False,  # Disable browser opening for Railway
                 server_name=server_name,
                 server_port=port,
-                share=enable_share,  # Set to True for public Gradio share link (like GitHub Pages)
+                share=enable_share,  # Disabled for Railway
                 debug=True  # Enable debug mode to see server-side errors
             )
         except Exception as e:
