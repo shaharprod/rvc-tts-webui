@@ -21,6 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Download models from Google Drive if GOOGLE_DRIVE_MODEL_ID is set
+RUN python download_models.py || echo "Models download skipped or failed"
+
 # Expose port
 EXPOSE 7865
 
