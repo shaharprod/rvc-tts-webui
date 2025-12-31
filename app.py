@@ -175,7 +175,213 @@ except Exception as e:
         "uk-UA-PolinaNeural-Female",
         "el-GR-AthinaNeural-Female",
         "ta-IN-PallaviNeural-Female",
+        # Additional languages
+        "nl-NL-ColetteNeural-Female",
+        "nl-NL-MaartenNeural-Male",
+        "sv-SE-SofieNeural-Female",
+        "sv-SE-MattiasNeural-Male",
+        "nb-NO-PernilleNeural-Female",
+        "nb-NO-FinnNeural-Male",
+        "da-DK-ChristelNeural-Female",
+        "da-DK-JeppeNeural-Male",
+        "pl-PL-AgnieszkaNeural-Female",
+        "pl-PL-MarekNeural-Male",
+        "tr-TR-EmelNeural-Female",
+        "tr-TR-AhmetNeural-Male",
+        "hi-IN-SwaraNeural-Female",
+        "hi-IN-MadhurNeural-Male",
+        "th-TH-PremwadeeNeural-Female",
+        "th-TH-NiwatNeural-Male",
+        "vi-VN-HoaiMyNeural-Female",
+        "vi-VN-NamMinhNeural-Male",
+        "id-ID-GadisNeural-Female",
+        "id-ID-ArdiNeural-Male",
+        "ms-MY-YasminNeural-Female",
+        "ms-MY-OsmanNeural-Male",
+        "fil-PH-BlessicaNeural-Female",
+        "fil-PH-AngeloNeural-Male",
+        "ur-PK-UzmaNeural-Female",
+        "ur-PK-AsadNeural-Male",
+        "cs-CZ-AntoninNeural-Male",
+        "cs-CZ-VlastaNeural-Female",
+        "hu-HU-TamasNeural-Male",
+        "hu-HU-NoemiNeural-Female",
     ]
+
+# Country code mappings for display
+country_codes = {
+    "IL": "ISRAEL",
+    "US": "UNITED STATES",
+    "JP": "JAPAN",
+    "CN": "CHINA",
+    "KR": "KOREA",
+    "FR": "FRANCE",
+    "DE": "GERMANY",
+    "ES": "SPAIN",
+    "IT": "ITALY",
+    "PT": "PORTUGAL",
+    "RU": "RUSSIA",
+    "AR": "ARABIA",  # For ar-EG, ar-SA, etc.
+    "EG": "EGYPT",
+    "SA": "SAUDI ARABIA",
+    "FI": "FINLAND",
+    "UA": "UKRAINE",
+    "GR": "GREECE",
+    "IN": "INDIA",
+    "NL": "NETHERLANDS",
+    "SE": "SWEDEN",
+    "NO": "NORWAY",
+    "DK": "DENMARK",
+    "PL": "POLAND",
+    "TR": "TURKEY",
+    "TH": "THAILAND",
+    "VN": "VIETNAM",
+    "ID": "INDONESIA",
+    "MY": "MALAYSIA",
+    "PH": "PHILIPPINES",
+    "PK": "PAKISTAN",
+    "CZ": "CZECH REPUBLIC",
+    "HU": "HUNGARY",
+    "GB": "UNITED KINGDOM",
+    "CA": "CANADA",
+    "AU": "AUSTRALIA",
+    "BR": "BRAZIL",
+    "MX": "MEXICO",
+    "ZA": "SOUTH AFRICA",
+    "AE": "UNITED ARAB EMIRATES",
+    "SG": "SINGAPORE",
+    "HK": "HONG KONG",
+    "TW": "TAIWAN",
+    "NZ": "NEW ZEALAND",
+    "IE": "IRELAND",
+    "BE": "BELGIUM",
+    "CH": "SWITZERLAND",
+    "AT": "AUSTRIA",
+    "SK": "SLOVAKIA",
+    "SI": "SLOVENIA",
+    "HR": "CROATIA",
+    "BA": "BOSNIA AND HERZEGOVINA",
+    "ME": "MONTENEGRO",
+    "MK": "NORTH MACEDONIA",
+    "AL": "ALBANIA",
+    "RS": "SERBIA",
+    "BG": "BULGARIA",
+    "RO": "ROMANIA",
+    "MD": "MOLDOVA",
+    "EE": "ESTONIA",
+    "LV": "LATVIA",
+    "LT": "LITHUANIA",
+    "IS": "ICELAND",
+    "FO": "FAROE ISLANDS",
+    "GL": "GREENLAND",
+    "MT": "MALTA",
+    "CY": "CYPRUS",
+    "LU": "LUXEMBOURG",
+    "LI": "LIECHTENSTEIN",
+    "MC": "MONACO",
+    "SM": "SAN MARINO",
+    "VA": "VATICAN CITY",
+    "AD": "ANDORRA",
+    "GI": "GIBRALTAR",
+    "GG": "GUERNSEY",
+    "JE": "JERSEY",
+    "IM": "ISLE OF MAN",
+}
+
+country_full = {v: k for k, v in country_codes.items()}
+
+def expand_country_codes(voice):
+    parts = voice.split('-')
+    if len(parts) >= 2:
+        lang, code = parts[0], parts[1]
+        full_code = country_codes.get(code.upper(), code)
+        parts[1] = full_code
+        return '-'.join(parts)
+    return voice
+
+def compress_country_codes(voice):
+    parts = voice.split('-')
+    if len(parts) >= 2:
+        lang, code = parts[0], parts[1]
+        short_code = country_full.get(code.upper(), code)
+        parts[1] = short_code
+        return '-'.join(parts)
+    return voice
+
+# Ensure additional voices are included
+additional_voices = [
+    "nl-NL-ColetteNeural-Female",
+    "nl-NL-MaartenNeural-Male",
+    "sv-SE-SofieNeural-Female",
+    "sv-SE-MattiasNeural-Male",
+    "nb-NO-PernilleNeural-Female",
+    "nb-NO-FinnNeural-Male",
+    "da-DK-ChristelNeural-Female",
+    "da-DK-JeppeNeural-Male",
+    "pl-PL-AgnieszkaNeural-Female",
+    "pl-PL-MarekNeural-Male",
+    "tr-TR-EmelNeural-Female",
+    "tr-TR-AhmetNeural-Male",
+    "hi-IN-SwaraNeural-Female",
+    "hi-IN-MadhurNeural-Male",
+    "th-TH-PremwadeeNeural-Female",
+    "th-TH-NiwatNeural-Male",
+    "vi-VN-HoaiMyNeural-Female",
+    "vi-VN-NamMinhNeural-Male",
+    "id-ID-GadisNeural-Female",
+    "id-ID-ArdiNeural-Male",
+    "ms-MY-YasminNeural-Female",
+    "ms-MY-OsmanNeural-Male",
+    "fil-PH-BlessicaNeural-Female",
+    "fil-PH-AngeloNeural-Male",
+    "ur-PK-UzmaNeural-Female",
+    "ur-PK-AsadNeural-Male",
+    "cs-CZ-AntoninNeural-Male",
+    "cs-CZ-VlastaNeural-Female",
+    "hu-HU-TamasNeural-Male",
+    "hu-HU-NoemiNeural-Female",
+]
+for voice in additional_voices:
+    if voice not in tts_voices:
+        tts_voices.append(voice)
+
+# Expand country codes for display
+tts_voices = [expand_country_codes(v) for v in tts_voices]
+
+# Sample sentences for each language
+sample_sentences = {
+    "Hebrew": "שלום, זוהי משפט דוגמה בעברית.",
+    "English": "Hello, this is a sample sentence in English.",
+    "Japanese": "こんにちは、これは日本語のサンプル文です。",
+    "Chinese": "你好，这是中文的示例句子。",
+    "Korean": "안녕하세요, 이것은 한국어 샘플 문장입니다.",
+    "French": "Bonjour, ceci est une phrase d'exemple en français.",
+    "German": "Hallo, dies ist ein Beispielsatz auf Deutsch.",
+    "Spanish": "Hola, esta es una oración de ejemplo en español.",
+    "Italian": "Ciao, questa è una frase di esempio in italiano.",
+    "Portuguese": "Olá, esta é uma frase de exemplo em português.",
+    "Russian": "Привет, это пример предложения на русском.",
+    "Arabic": "مرحبا، هذه جملة مثال باللغة العربية.",
+    "Finnish": "Hei, tämä on esimerkkilause suomeksi.",
+    "Ukrainian": "Привіт, це зразок речення українською.",
+    "Greek": "Γεια σας, αυτό είναι ένα δείγμα πρότασης στα ελληνικά.",
+    "Tamil": "வணக்கம், இது தமிழில் ஒரு மாதிரி வாக்கியம்.",
+    "Dutch": "Hallo, dit is een voorbeeldzin in het Nederlands.",
+    "Swedish": "Hej, detta är en exempelmening på svenska.",
+    "Norwegian": "Hei, dette er en eksempelsetning på norsk.",
+    "Danish": "Hej, dette er en eksempelsætning på dansk.",
+    "Polish": "Cześć, to jest przykładowe zdanie po polsku.",
+    "Turkish": "Merhaba, bu Türkçe bir örnek cümledir.",
+    "Hindi": "नमस्ते, यह हिंदी में एक नमूना वाक्य है।",
+    "Thai": "สวัสดี, นี่คือประโยคตัวอย่างในภาษาไทย.",
+    "Vietnamese": "Xin chào, đây là một câu mẫu bằng tiếng Việt.",
+    "Indonesian": "Halo, ini adalah kalimat contoh dalam bahasa Indonesia.",
+    "Malay": "Hai, ini adalah ayat contoh dalam bahasa Melayu.",
+    "Filipino": "Kamusta, ito ay isang halimbawa ng pangungusap sa Filipino.",
+    "Urdu": "ہیلو، یہ اردو میں ایک نمونہ جملہ ہے۔",
+    "Czech": "Ahoj, toto je ukázková věta v češtině.",
+    "Hungarian": "Helló, ez egy példamondat magyarul.",
+}
 
 model_root = "weights"
 try:
@@ -328,21 +534,23 @@ except Exception as e:
 # TTS Engine Functions
 def generate_tts_edge(tts_text, tts_voice, speed_str, output_filename):
     """Generate TTS using Edge TTS (free, no API key needed)"""
+    # Convert display name back to short codes for TTS
+    tts_voice = compress_country_codes(tts_voice)
     voice_parts = tts_voice.split("-")
     max_retries = 3
     
     for attempt in range(max_retries):
         try:
             if attempt == 0:
+                voice_name = tts_voice  # Try full name first
+            elif attempt == 1:
                 if len(voice_parts) >= 4:
-                    voice_name = "-".join(voice_parts[:-1])
+                    voice_name = "-".join(voice_parts[:-1])  # Without gender
                 else:
                     voice_name = tts_voice
-            elif attempt == 1:
-                voice_name = tts_voice
             else:
                 if len(voice_parts) >= 3:
-                    voice_name = "-".join(voice_parts[:3])
+                    voice_name = "-".join(voice_parts[:3])  # Language-region only
                 else:
                     voice_name = tts_voice
             
@@ -789,6 +997,12 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
                 step=1,
                 interactive=True,
             )
+            sample_radio = gr.Radio(
+                label="Sample Sentences",
+                choices=list(sample_sentences.keys()),
+                value=None,
+                interactive=True,
+            )
             tts_text = gr.Textbox(label="Input Text", value="זה משפט ברירת המחדל.")
         with gr.Column():
             but0 = gr.Button("Convert", variant="primary")
@@ -832,6 +1046,13 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
             ],
             [info_text, edge_tts_output, tts_output],
         )
+        # Update text box when sample sentence is selected
+        sample_radio.change(
+            fn=lambda x: sample_sentences.get(x, ""),
+            inputs=sample_radio,
+            outputs=tts_text,
+        )
+    
     # Examples component removed due to Gradio 3.34.0 compatibility issue
     # (causes KeyError: 'dataset' in API info endpoint)
     # with gr.Row():
