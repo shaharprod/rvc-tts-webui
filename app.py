@@ -534,6 +534,8 @@ sample_sentences = {
     "Turkish": "Merhaba, bu Türkçe bir örnek cümledir.",
     "Ukrainian": "Привіт, це зразок речення українською.",
     "Vietnamese": "Xin chào, đây là một câu mẫu bằng tiếng Việt.",
+}
+
 import zipfile
 
 # Function to download and extract models from Google Drive
@@ -562,17 +564,40 @@ def download_and_extract_models():
     print(f"Downloading models from Google Drive ID: {gdrive_id}")
 
     try:
-        # Google Drive download URL
+        # Google Drive download URL - try direct download first
         url = f"https://drive.google.com/uc?id={gdrive_id}&export=download"
 
         print("Downloading zip file...")
-        urllib.request.urlretrieve(url, zip_path)
+        # Set up request with user agent to avoid issues
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            content = response.read()
+            with open(zip_path, 'wb') as f:
+                f.write(content)
+        print(f"Downloaded {len(content)} bytes")
+
+        # Check if it's actually a zip file
+        if len(content) < 100:
+            print("Warning: Downloaded content is too small, might be an error page")
+            print(f"Content preview: {content[:200]}")
+            return
+
         print("Download completed")
 
         print("Extracting zip file...")
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # List contents before extraction
+            zip_contents = zip_ref.namelist()
+            print(f"Zip contents: {zip_contents}")
             zip_ref.extractall(model_root)
         print("Extraction completed")
+
+        # Verify extraction
+        extracted_files = []
+        for root, dirs, files in os.walk(model_root):
+            for file in files:
+                extracted_files.append(os.path.join(root, file))
+        print(f"Extracted files: {extracted_files}")
 
         # Remove the zip file
         os.remove(zip_path)
