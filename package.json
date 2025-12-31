@@ -1,0 +1,12 @@
+{
+  "name": "decibels",
+  "version": "1.0.0",
+  "description": "Audio analyzer with microphone input, spectrogram, and recording",
+  "scripts": {
+    "start": "npx serve -s . -l $PORT"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+
