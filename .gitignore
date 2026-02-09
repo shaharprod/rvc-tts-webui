@@ -3,3 +3,24 @@ __pycache__/
 *.mp3
 hubert_base.pt
 rmvpe.pt
+
+# IDE / Editor
+.vscode/
+.claude/
+.snapshots/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.pyc
+*.pyo
+
+# Local dev files
+*.bat
+pip_list.txt
+weights.zip
+.gradio/
+edge_output.mp3
