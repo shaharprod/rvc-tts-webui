@@ -132,72 +132,85 @@ try:
 except Exception as e:
     print(f"Warning: Could not load TTS voices list: {e}")
     print("Using default voice list...")
-    # Default voices as fallback (including Hebrew)
+    # Default voices as fallback - sorted alphabetically by language
     tts_voices = [
-        # Hebrew voices
-        "he-IL-AvriNeural-Male",
-        "he-IL-HilaNeural-Female",
-        # Japanese
-        "ja-JP-NanamiNeural-Female",
-        "ja-JP-KeitaNeural-Male",
-        # English
-        "en-US-AriaNeural-Female",
-        "en-US-DavisNeural-Male",
+        # Arabic
+        "ar-EG-SalmaNeural-Female",
+        "ar-EG-ShakirNeural-Male",
         # Chinese
         "zh-CN-XiaoxiaoNeural-Female",
         "zh-CN-YunxiNeural-Male",
-        # Korean
-        "ko-KR-SunHiNeural-Female",
-        "ko-KR-InJoonNeural-Male",
+        # Danish
+        "da-DK-ChristelNeural-Female",
+        "da-DK-JeppeNeural-Male",
+        # Dutch
+        "nl-NL-ColetteNeural-Female",
+        "nl-NL-MaartenNeural-Male",
+        # English
+        "en-US-AriaNeural-Female",
+        "en-US-DavisNeural-Male",
+        # Finnish
+        "fi-FI-NooraNeural-Female",
         # French
         "fr-FR-DeniseNeural-Female",
         "fr-FR-HenriNeural-Male",
         # German
         "de-DE-AmalaNeural-Female",
         "de-DE-ConradNeural-Male",
-        # Spanish
-        "es-ES-ElviraNeural-Female",
-        "es-ES-AlvaroNeural-Male",
+        # Greek
+        "el-GR-AthinaNeural-Female",
+        # Hebrew
+        "he-IL-AvriNeural-Male",
+        "he-IL-HilaNeural-Female",
+        # Hindi
+        "hi-IN-SwaraNeural-Female",
+        "hi-IN-MadhurNeural-Male",
+        # Indonesian
+        "id-ID-GadisNeural-Female",
+        "id-ID-ArdiNeural-Male",
         # Italian
         "it-IT-ElsaNeural-Female",
         "it-IT-DiegoNeural-Male",
+        # Japanese
+        "ja-JP-NanamiNeural-Female",
+        "ja-JP-KeitaNeural-Male",
+        # Korean
+        "ko-KR-SunHiNeural-Female",
+        "ko-KR-InJoonNeural-Male",
+        # Malay
+        "ms-MY-YasminNeural-Female",
+        "ms-MY-OsmanNeural-Male",
+        # Norwegian
+        "nb-NO-PernilleNeural-Female",
+        "nb-NO-FinnNeural-Male",
+        # Polish
+        "pl-PL-AgnieszkaNeural-Female",
+        "pl-PL-MarekNeural-Male",
         # Portuguese
         "pt-PT-RaquelNeural-Female",
         "pt-PT-DuarteNeural-Male",
         # Russian
         "ru-RU-SvetlanaNeural-Female",
         "ru-RU-DmitryNeural-Male",
-        # Arabic
-        "ar-EG-SalmaNeural-Female",
-        "ar-EG-ShakirNeural-Male",
-        # More languages
-        "fi-FI-NooraNeural-Female",
-        "uk-UA-PolinaNeural-Female",
-        "el-GR-AthinaNeural-Female",
-        "ta-IN-PallaviNeural-Female",
-        # Additional languages
-        "nl-NL-ColetteNeural-Female",
-        "nl-NL-MaartenNeural-Male",
+        # Spanish
+        "es-ES-ElviraNeural-Female",
+        "es-ES-AlvaroNeural-Male",
+        # Swedish
         "sv-SE-SofieNeural-Female",
         "sv-SE-MattiasNeural-Male",
-        "nb-NO-PernilleNeural-Female",
-        "nb-NO-FinnNeural-Male",
-        "da-DK-ChristelNeural-Female",
-        "da-DK-JeppeNeural-Male",
-        "pl-PL-AgnieszkaNeural-Female",
-        "pl-PL-MarekNeural-Male",
-        "tr-TR-EmelNeural-Female",
-        "tr-TR-AhmetNeural-Male",
-        "hi-IN-SwaraNeural-Female",
-        "hi-IN-MadhurNeural-Male",
+        # Tamil
+        "ta-IN-PallaviNeural-Female",
+        # Thai
         "th-TH-PremwadeeNeural-Female",
         "th-TH-NiwatNeural-Male",
+        # Turkish
+        "tr-TR-EmelNeural-Female",
+        "tr-TR-AhmetNeural-Male",
+        # Ukrainian
+        "uk-UA-PolinaNeural-Female",
+        # Vietnamese
         "vi-VN-HoaiMyNeural-Female",
         "vi-VN-NamMinhNeural-Male",
-        "id-ID-GadisNeural-Female",
-        "id-ID-ArdiNeural-Male",
-        "ms-MY-YasminNeural-Female",
-        "ms-MY-OsmanNeural-Male",
     ]
 
 # Country code mappings for display
@@ -464,46 +477,51 @@ def expand_country_codes(voice):
         return '-'.join(parts)
     return voice
 
-def compress_country_codes(voice):
-    parts = voice.split('-')
-    if len(parts) >= 2:
-        lang, code = parts[0], parts[1]
-        short_code = country_full.get(code.upper(), code)
-        parts[1] = short_code
-        return '-'.join(parts)
-    return voice
+# Build display→original mapping and expand for display
+# This is the ONLY reliable way to convert back - no string parsing needed
+voice_display_to_original = {}
+for v in tts_voices:
+    display = expand_country_codes(v)
+    voice_display_to_original[display] = v
 
-# Ensure additional voices are included
-additional_voices = [
-    "nl-NL-ColetteNeural-Female",
-    "nl-NL-MaartenNeural-Male",
-    "sv-SE-SofieNeural-Female",
-    "sv-SE-MattiasNeural-Male",
-    "nb-NO-PernilleNeural-Female",
-    "nb-NO-FinnNeural-Male",
-    "da-DK-ChristelNeural-Female",
-    "da-DK-JeppeNeural-Male",
-    "pl-PL-AgnieszkaNeural-Female",
-    "pl-PL-MarekNeural-Male",
-    "tr-TR-EmelNeural-Female",
-    "tr-TR-AhmetNeural-Male",
-    "hi-IN-SwaraNeural-Female",
-    "hi-IN-MadhurNeural-Male",
-    "th-TH-PremwadeeNeural-Female",
-    "th-TH-NiwatNeural-Male",
-    "vi-VN-HoaiMyNeural-Female",
-    "vi-VN-NamMinhNeural-Male",
-    "id-ID-GadisNeural-Female",
-    "id-ID-ArdiNeural-Male",
-    "ms-MY-YasminNeural-Female",
-    "ms-MY-OsmanNeural-Male",
-]
-for voice in additional_voices:
-    if voice not in tts_voices:
-        tts_voices.append(voice)
+# Sort expanded names alphabetically for the dropdown
+tts_voices = sorted(voice_display_to_original.keys())
 
-# Expand country codes for display
-tts_voices = [expand_country_codes(v) for v in tts_voices]
+def get_original_voice(display_voice):
+    """Reliably convert expanded display name back to original Edge TTS voice name."""
+    return voice_display_to_original.get(display_voice, display_voice)
+
+# Language name to preferred country prefix (expanded) for auto-selecting speaker
+# Uses the "standard" country for each language to avoid picking regional variants
+language_to_preferred = {
+    "Arabic": "ar-EGYPT-",
+    "Chinese": "zh-CHINA-",
+    "Danish": "da-DENMARK-",
+    "Dutch": "nl-NETHERLANDS-",
+    "English": "en-UNITED STATES-",
+    "Finnish": "fi-FINLAND-",
+    "French": "fr-FRANCE-",
+    "German": "de-GERMANY-",
+    "Greek": "el-GREECE-",
+    "Hebrew": "he-ISRAEL-",
+    "Hindi": "hi-INDIA-",
+    "Indonesian": "id-INDONESIA-",
+    "Italian": "it-ITALY-",
+    "Japanese": "ja-JAPAN-",
+    "Korean": "ko-SOUTH KOREA-",
+    "Malay": "ms-MALAYSIA-",
+    "Norwegian": "nb-NORWAY-",
+    "Polish": "pl-POLAND-",
+    "Portuguese": "pt-PORTUGAL-",
+    "Russian": "ru-RUSSIA-",
+    "Spanish": "es-SPAIN-",
+    "Swedish": "sv-SWEDEN-",
+    "Tamil": "ta-INDIA-",
+    "Thai": "th-THAILAND-",
+    "Turkish": "tr-TURKEY-",
+    "Ukrainian": "uk-UKRAINE-",
+    "Vietnamese": "vi-VIETNAM-",
+}
 
 # Sample sentences for each language
 sample_sentences = {
@@ -685,39 +703,65 @@ except Exception as e:
 
 
 # TTS Engine Functions
+def get_edge_voice_name(voice):
+    """Strip the -Male/-Female gender suffix to get the Edge TTS ShortName.
+    Edge TTS expects ShortName only (e.g., 'he-IL-AvriNeural'), not 'he-IL-AvriNeural-Male'."""
+    if voice.endswith("-Male"):
+        return voice[:-5]
+    elif voice.endswith("-Female"):
+        return voice[:-7]
+    return voice
+
+
+def _run_edge_tts(communicate, output_filename):
+    """Run edge-tts communicate.save() in a clean event loop.
+    Handles Windows ProactorEventLoop cleanup issues gracefully."""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(communicate.save(output_filename))
+    finally:
+        # Gracefully shutdown: allow pending callbacks to complete
+        try:
+            # Cancel remaining tasks
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        except Exception:
+            pass
+        finally:
+            loop.close()
+            asyncio.set_event_loop(None)
+
+
 def generate_tts_edge(tts_text, tts_voice, speed_str, output_filename):
     """Generate TTS using Edge TTS (free, no API key needed)"""
-    # Convert display name back to short codes for TTS
-    tts_voice = compress_country_codes(tts_voice)
-    voice_parts = tts_voice.split("-")
+    # Strip gender suffix - Edge TTS expects ShortName only
+    voice_name = get_edge_voice_name(tts_voice)
     max_retries = 3
-    
+    last_error = None
+
     for attempt in range(max_retries):
         try:
-            if attempt == 0:
-                voice_name = tts_voice  # Try full name first
-            elif attempt == 1:
-                if len(voice_parts) >= 4:
-                    voice_name = "-".join(voice_parts[:-1])  # Without gender
-                else:
-                    voice_name = tts_voice
-            else:
-                if len(voice_parts) >= 3:
-                    voice_name = "-".join(voice_parts[:3])  # Language-region only
-                else:
-                    voice_name = tts_voice
-            
             communicate = edge_tts.Communicate(tts_text, voice_name, rate=speed_str)
-            asyncio.run(communicate.save(output_filename))
-            
+            _run_edge_tts(communicate, output_filename)
+
             if os.path.exists(output_filename) and os.path.getsize(output_filename) > 0:
                 return True, None
+            else:
+                last_error = f"Edge TTS produced empty output for voice '{voice_name}'"
+                print(f"  Attempt {attempt+1}: {last_error}")
         except Exception as e:
-            if attempt == max_retries - 1:
-                return False, str(e)
-            time.sleep(2)
-    
-    return False, "Failed after all retries"
+            last_error = f"Edge TTS error (voice='{voice_name}'): {e}"
+            print(f"  Attempt {attempt+1}: {last_error}")
+
+        if attempt < max_retries - 1:
+            time.sleep(1)
+
+    return False, last_error or "Failed after all retries"
 
 
 def generate_tts_openai(tts_text, tts_voice, speed, api_key, output_filename):
@@ -908,21 +952,18 @@ def tts(
 ):
     print("------------------")
     print(datetime.datetime.now())
+    # Convert expanded display name back to original Edge TTS voice name
+    tts_voice = get_original_voice(tts_voice)
     print("tts_text:")
     print(tts_text)
     print(f"tts_voice: {tts_voice}")
     print(f"Model name: {model_name}")
     print(f"F0: {f0_method}, Key: {f0_up_key}, Index: {index_rate}, Protect: {protect}")
     try:
-        # No limitations - removed for better usability
-        # if limitation and len(tts_text) > max_text_length:
-        #     print("Error: Text too long")
-        #     return (
-        #         f"Text characters should be at most {max_text_length} in this huggingface space, but got {len(tts_text)} characters.",
-        #         None,
-        #         None,
-        #     )
-        
+        # Validate text input
+        if not tts_text or not tts_text.strip():
+            return ("שגיאה: הטקסט ריק. אנא הכנס טקסט.", None, None)
+
         # Check if model is selected (before loading model)
         if not model_name or (len(models) > 0 and model_name not in models):
             return (
@@ -931,34 +972,42 @@ def tts(
                 None,
                 None,
             )
+
+        # Validate voice selection
+        if not tts_voice or tts_voice.strip() == "":
+            return ("שגיאה: לא נבחר קול/דובר. אנא בחר קול מהרשימה.", None, None)
         
         tgt_sr, net_g, vc, version, index_file, if_f0 = model_data(model_name)
         t0 = time.time()
-        
+
+        # Use unique temp file per request to avoid conflicts
+        import tempfile
+        temp_output = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False).name
+
         # Format speed string for edge-tts
         if speed >= 0:
             speed_str = f"+{speed}%"
         else:
             speed_str = f"{speed}%"
-        
+
         print(f"TTS Engine: {tts_engine}")
         print(f"Text: {tts_text[:50]}...")
         print(f"Voice: {tts_voice}")
         print(f"Speed: {speed}%")
         print(f"Pitch adjustment: {pitch} semitones")
-        
+
         # Generate TTS based on selected engine
         tts_success = False
         tts_error = None
-        
+
         if tts_engine == "Edge TTS (Free)":
-            tts_success, tts_error = generate_tts_edge(tts_text, tts_voice, speed_str, edge_output_filename)
+            tts_success, tts_error = generate_tts_edge(tts_text, tts_voice, speed_str, temp_output)
         elif tts_engine == "OpenAI TTS":
-            tts_success, tts_error = generate_tts_openai(tts_text, tts_voice, speed, openai_api_key, edge_output_filename)
+            tts_success, tts_error = generate_tts_openai(tts_text, tts_voice, speed, openai_api_key, temp_output)
         elif tts_engine == "Google Cloud TTS":
-            tts_success, tts_error = generate_tts_google(tts_text, tts_voice, speed, google_api_key_json, edge_output_filename)
+            tts_success, tts_error = generate_tts_google(tts_text, tts_voice, speed, google_api_key_json, temp_output)
         elif tts_engine == "ElevenLabs":
-            tts_success, tts_error = generate_tts_elevenlabs(tts_text, tts_voice, speed, elevenlabs_api_key, elevenlabs_voice_id, edge_output_filename)
+            tts_success, tts_error = generate_tts_elevenlabs(tts_text, tts_voice, speed, elevenlabs_api_key, elevenlabs_voice_id, temp_output)
         else:
             return (
                 f"שגיאה: מנוע TTS לא נתמך: {tts_engine}",
@@ -985,17 +1034,9 @@ def tts(
             )
         t1 = time.time()
         edge_time = t1 - t0
-        audio, sr = librosa.load(edge_output_filename, sr=16000, mono=True)
+        audio, sr = librosa.load(temp_output, sr=16000, mono=True)
         duration = len(audio) / sr
         print(f"Audio duration: {duration}s")
-        # No duration limitation - removed for better usability
-        # if limitation and duration >= max_duration:
-        #     print("Error: Audio too long")
-        #     return (
-        #         f"Audio should be less than {max_duration} seconds in this huggingface space, but got {duration:.2f}s.",
-        #         edge_output_filename,
-        #         None,
-        #     )
 
         # Combine user's f0_up_key with pitch slider value
         user_f0_up_key = int(f0_up_key)
@@ -1012,7 +1053,7 @@ def tts(
             net_g,
             0,
             audio,
-            edge_output_filename,
+            temp_output,
             times,
             final_f0_up_key,
             f0_method,
@@ -1034,20 +1075,20 @@ def tts(
         print(info)
         return (
             info,
-            edge_output_filename,
+            temp_output,
             (tgt_sr, audio_opt),
         )
     except EOFError:
         info = (
-            "It seems that the edge-tts output is not valid. "
-            "This may occur when the input text and the speaker do not match. "
-            "For example, maybe you entered Japanese (without alphabets) text but chose non-Japanese speaker?"
+            "שגיאה: הפלט מ-Edge TTS לא תקין.\n"
+            "ייתכן שהטקסט והדובר לא תואמים.\n"
+            "נסה דובר אחר או שנה את הטקסט."
         )
         print(info)
         return info, None, None
-    except:
-        info = traceback.format_exc()
-        print(info)
+    except Exception as e:
+        info = f"שגיאה: {str(e)}"
+        print(f"Exception in tts(): {traceback.format_exc()}")
         return info, None, None
 
 
@@ -1108,7 +1149,7 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
                 label="Speaker/Voice",
                 choices=tts_voices,
                 allow_custom_value=False,
-                value="he-IL-AvriNeural-Male" if "he-IL-AvriNeural-Male" in tts_voices else ("he-IL-HilaNeural-Female" if "he-IL-HilaNeural-Female" in tts_voices else tts_voices[0] if tts_voices else "ja-JP-NanamiNeural-Female"),
+                value=expand_country_codes("he-IL-AvriNeural-Male") if expand_country_codes("he-IL-AvriNeural-Male") in tts_voices else (expand_country_codes("he-IL-HilaNeural-Female") if expand_country_codes("he-IL-HilaNeural-Female") in tts_voices else tts_voices[0] if tts_voices else "ja-JP-NanamiNeural-Female"),
             )
             openai_api_key = gr.Textbox(
                 label="OpenAI API Key",
@@ -1199,11 +1240,26 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
             ],
             [info_text, edge_tts_output, tts_output],
         )
-        # Update text box when sample sentence is selected
+        # Update text box and auto-select matching speaker when sample sentence is selected
+        def on_sample_selected(language, current_voice):
+            text = sample_sentences.get(language, "")
+            # Try preferred country first (e.g., "de-GERMANY-" instead of "de-AUSTRIA-")
+            preferred = language_to_preferred.get(language, "")
+            if preferred:
+                matching = [v for v in tts_voices if v.startswith(preferred)]
+                if matching:
+                    return text, matching[0]
+                # Fallback: any voice with same language code (e.g., "de-")
+                short_prefix = preferred.split("-")[0] + "-"
+                matching = [v for v in tts_voices if v.startswith(short_prefix)]
+                if matching:
+                    return text, matching[0]
+            return text, current_voice
+
         sample_radio.change(
-            fn=lambda x: sample_sentences.get(x, ""),
-            inputs=sample_radio,
-            outputs=tts_text,
+            fn=on_sample_selected,
+            inputs=[sample_radio, tts_voice],
+            outputs=[tts_text, tts_voice],
         )
     
     # Examples component removed due to Gradio 3.34.0 compatibility issue
