@@ -9,6 +9,9 @@ rmvpe.pt
 .claude/
 .snapshots/
 .idea/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
@@ -24,3 +27,8 @@ pip_list.txt
 weights.zip
 .gradio/
 edge_output.mp3
+
+# Non-project files
+md.html
+package.json
+railway.json

@@ -175,7 +175,366 @@ except Exception as e:
         "uk-UA-PolinaNeural-Female",
         "el-GR-AthinaNeural-Female",
         "ta-IN-PallaviNeural-Female",
+        # Additional languages
+        "nl-NL-ColetteNeural-Female",
+        "nl-NL-MaartenNeural-Male",
+        "sv-SE-SofieNeural-Female",
+        "sv-SE-MattiasNeural-Male",
+        "nb-NO-PernilleNeural-Female",
+        "nb-NO-FinnNeural-Male",
+        "da-DK-ChristelNeural-Female",
+        "da-DK-JeppeNeural-Male",
+        "pl-PL-AgnieszkaNeural-Female",
+        "pl-PL-MarekNeural-Male",
+        "tr-TR-EmelNeural-Female",
+        "tr-TR-AhmetNeural-Male",
+        "hi-IN-SwaraNeural-Female",
+        "hi-IN-MadhurNeural-Male",
+        "th-TH-PremwadeeNeural-Female",
+        "th-TH-NiwatNeural-Male",
+        "vi-VN-HoaiMyNeural-Female",
+        "vi-VN-NamMinhNeural-Male",
+        "id-ID-GadisNeural-Female",
+        "id-ID-ArdiNeural-Male",
+        "ms-MY-YasminNeural-Female",
+        "ms-MY-OsmanNeural-Male",
     ]
+
+# Country code mappings for display
+country_codes = {
+    "AD": "ANDORRA",
+    "AE": "UNITED ARAB EMIRATES",
+    "AF": "AFGHANISTAN",
+    "AG": "ANTIGUA AND BARBUDA",
+    "AI": "ANGUILLA",
+    "AL": "ALBANIA",
+    "AM": "ARMENIA",
+    "AO": "ANGOLA",
+    "AQ": "ANTARCTICA",
+    "AR": "ARGENTINA",
+    "AS": "AMERICAN SAMOA",
+    "AT": "AUSTRIA",
+    "AU": "AUSTRALIA",
+    "AW": "ARUBA",
+    "AX": "ALAND ISLANDS",
+    "AZ": "AZERBAIJAN",
+    "BA": "BOSNIA AND HERZEGOVINA",
+    "BB": "BARBADOS",
+    "BD": "BANGLADESH",
+    "BE": "BELGIUM",
+    "BF": "BURKINA FASO",
+    "BG": "BULGARIA",
+    "BH": "BAHRAIN",
+    "BI": "BURUNDI",
+    "BJ": "BENIN",
+    "BL": "SAINT BARTHELEMY",
+    "BM": "BERMUDA",
+    "BN": "BRUNEI",
+    "BO": "BOLIVIA",
+    "BQ": "BONAIRE",
+    "BR": "BRAZIL",
+    "BS": "BAHAMAS",
+    "BT": "BHUTAN",
+    "BV": "BOUVET ISLAND",
+    "BW": "BOTSWANA",
+    "BY": "BELARUS",
+    "BZ": "BELIZE",
+    "CA": "CANADA",
+    "CC": "COCOS ISLANDS",
+    "CD": "DEMOCRATIC REPUBLIC OF THE CONGO",
+    "CF": "CENTRAL AFRICAN REPUBLIC",
+    "CG": "CONGO",
+    "CH": "SWITZERLAND",
+    "CI": "IVORY COAST",
+    "CK": "COOK ISLANDS",
+    "CL": "CHILE",
+    "CM": "CAMEROON",
+    "CN": "CHINA",
+    "CO": "COLOMBIA",
+    "CR": "COSTA RICA",
+    "CU": "CUBA",
+    "CV": "CAPE VERDE",
+    "CW": "CURACAO",
+    "CX": "CHRISTMAS ISLAND",
+    "CY": "CYPRUS",
+    "CZ": "CZECH REPUBLIC",
+    "DE": "GERMANY",
+    "DJ": "DJIBOUTI",
+    "DK": "DENMARK",
+    "DM": "DOMINICA",
+    "DO": "DOMINICAN REPUBLIC",
+    "DZ": "ALGERIA",
+    "EC": "ECUADOR",
+    "EE": "ESTONIA",
+    "EG": "EGYPT",
+    "EH": "WESTERN SAHARA",
+    "ER": "ERITREA",
+    "ES": "SPAIN",
+    "ET": "ETHIOPIA",
+    "FI": "FINLAND",
+    "FJ": "FIJI",
+    "FK": "FALKLAND ISLANDS",
+    "FM": "MICRONESIA",
+    "FO": "FAROE ISLANDS",
+    "FR": "FRANCE",
+    "GA": "GABON",
+    "GB": "UNITED KINGDOM",
+    "GD": "GRENADA",
+    "GE": "GEORGIA",
+    "GF": "FRENCH GUIANA",
+    "GG": "GUERNSEY",
+    "GH": "GHANA",
+    "GI": "GIBRALTAR",
+    "GL": "GREENLAND",
+    "GM": "GAMBIA",
+    "GN": "GUINEA",
+    "GP": "GUADELOUPE",
+    "GQ": "EQUATORIAL GUINEA",
+    "GR": "GREECE",
+    "GS": "SOUTH GEORGIA",
+    "GT": "GUATEMALA",
+    "GU": "GUAM",
+    "GW": "GUINEA-BISSAU",
+    "GY": "GUYANA",
+    "HK": "HONG KONG",
+    "HM": "HEARD ISLAND",
+    "HN": "HONDURAS",
+    "HR": "CROATIA",
+    "HT": "HAITI",
+    "HU": "HUNGARY",
+    "ID": "INDONESIA",
+    "IE": "IRELAND",
+    "IL": "ISRAEL",
+    "IM": "ISLE OF MAN",
+    "IN": "INDIA",
+    "IO": "BRITISH INDIAN OCEAN TERRITORY",
+    "IQ": "IRAQ",
+    "IR": "IRAN",
+    "IS": "ICELAND",
+    "IT": "ITALY",
+    "JE": "JERSEY",
+    "JM": "JAMAICA",
+    "JO": "JORDAN",
+    "JP": "JAPAN",
+    "KE": "KENYA",
+    "KG": "KYRGYZSTAN",
+    "KH": "CAMBODIA",
+    "KI": "KIRIBATI",
+    "KM": "COMOROS",
+    "KN": "SAINT KITTS AND NEVIS",
+    "KP": "NORTH KOREA",
+    "KR": "SOUTH KOREA",
+    "KW": "KUWAIT",
+    "KY": "CAYMAN ISLANDS",
+    "KZ": "KAZAKHSTAN",
+    "LA": "LAOS",
+    "LB": "LEBANON",
+    "LC": "SAINT LUCIA",
+    "LI": "LIECHTENSTEIN",
+    "LK": "SRI LANKA",
+    "LR": "LIBERIA",
+    "LS": "LESOTHO",
+    "LT": "LITHUANIA",
+    "LU": "LUXEMBOURG",
+    "LV": "LATVIA",
+    "LY": "LIBYA",
+    "MA": "MOROCCO",
+    "MC": "MONACO",
+    "MD": "MOLDOVA",
+    "ME": "MONTENEGRO",
+    "MF": "SAINT MARTIN",
+    "MG": "MADAGASCAR",
+    "MH": "MARSHALL ISLANDS",
+    "MK": "NORTH MACEDONIA",
+    "ML": "MALI",
+    "MM": "MYANMAR",
+    "MN": "MONGOLIA",
+    "MO": "MACAO",
+    "MP": "NORTHERN MARIANA ISLANDS",
+    "MQ": "MARTINIQUE",
+    "MR": "MAURITANIA",
+    "MS": "MONTSERRAT",
+    "MT": "MALTA",
+    "MU": "MAURITIUS",
+    "MV": "MALDIVES",
+    "MW": "MALAWI",
+    "MX": "MEXICO",
+    "MY": "MALAYSIA",
+    "MZ": "MOZAMBIQUE",
+    "NA": "NAMIBIA",
+    "NC": "NEW CALEDONIA",
+    "NE": "NIGER",
+    "NF": "NORFOLK ISLAND",
+    "NG": "NIGERIA",
+    "NI": "NICARAGUA",
+    "NL": "NETHERLANDS",
+    "NO": "NORWAY",
+    "NP": "NEPAL",
+    "NR": "NAURU",
+    "NU": "NIUE",
+    "NZ": "NEW ZEALAND",
+    "OM": "OMAN",
+    "PA": "PANAMA",
+    "PE": "PERU",
+    "PF": "FRENCH POLYNESIA",
+    "PG": "PAPUA NEW GUINEA",
+    "PH": "PHILIPPINES",
+    "PK": "PAKISTAN",
+    "PL": "POLAND",
+    "PM": "SAINT PIERRE AND MIQUELON",
+    "PN": "PITCAIRN",
+    "PR": "PUERTO RICO",
+    "PS": "PALESTINE",
+    "PT": "PORTUGAL",
+    "PW": "PALAU",
+    "PY": "PARAGUAY",
+    "QA": "QATAR",
+    "RE": "REUNION",
+    "RO": "ROMANIA",
+    "RS": "SERBIA",
+    "RU": "RUSSIA",
+    "RW": "RWANDA",
+    "SA": "SAUDI ARABIA",
+    "SB": "SOLOMON ISLANDS",
+    "SC": "SEYCHELLES",
+    "SD": "SUDAN",
+    "SE": "SWEDEN",
+    "SG": "SINGAPORE",
+    "SH": "SAINT HELENA",
+    "SI": "SLOVENIA",
+    "SJ": "SVALBARD AND JAN MAYEN",
+    "SK": "SLOVAKIA",
+    "SL": "SIERRA LEONE",
+    "SM": "SAN MARINO",
+    "SN": "SENEGAL",
+    "SO": "SOMALIA",
+    "SR": "SURINAME",
+    "SS": "SOUTH SUDAN",
+    "ST": "SAO TOME AND PRINCIPE",
+    "SV": "EL SALVADOR",
+    "SX": "SINT MAARTEN",
+    "SY": "SYRIA",
+    "SZ": "SWAZILAND",
+    "TC": "TURKS AND CAICOS ISLANDS",
+    "TD": "CHAD",
+    "TF": "FRENCH SOUTHERN TERRITORIES",
+    "TG": "TOGO",
+    "TH": "THAILAND",
+    "TJ": "TAJIKISTAN",
+    "TK": "TOKELAU",
+    "TL": "TIMOR-LESTE",
+    "TM": "TURKMENISTAN",
+    "TN": "TUNISIA",
+    "TO": "TONGA",
+    "TR": "TURKEY",
+    "TT": "TRINIDAD AND TOBAGO",
+    "TV": "TUVALU",
+    "TW": "TAIWAN",
+    "TZ": "TANZANIA",
+    "UA": "UKRAINE",
+    "UG": "UGANDA",
+    "UM": "UNITED STATES MINOR OUTLYING ISLANDS",
+    "US": "UNITED STATES",
+    "UY": "URUGUAY",
+    "UZ": "UZBEKISTAN",
+    "VA": "VATICAN CITY",
+    "VC": "SAINT VINCENT AND THE GRENADINES",
+    "VE": "VENEZUELA",
+    "VG": "BRITISH VIRGIN ISLANDS",
+    "VI": "U.S. VIRGIN ISLANDS",
+    "VN": "VIETNAM",
+    "VU": "VANUATU",
+    "WF": "WALLIS AND FUTUNA",
+    "WS": "SAMOA",
+    "YE": "YEMEN",
+    "YT": "MAYOTTE",
+    "ZA": "SOUTH AFRICA",
+    "ZM": "ZAMBIA",
+    "ZW": "ZIMBABWE",
+}
+
+country_full = {v: k for k, v in country_codes.items()}
+
+def expand_country_codes(voice):
+    parts = voice.split('-')
+    if len(parts) >= 2:
+        lang, code = parts[0], parts[1]
+        full_code = country_codes.get(code.upper(), code)
+        parts[1] = full_code
+        return '-'.join(parts)
+    return voice
+
+def compress_country_codes(voice):
+    parts = voice.split('-')
+    if len(parts) >= 2:
+        lang, code = parts[0], parts[1]
+        short_code = country_full.get(code.upper(), code)
+        parts[1] = short_code
+        return '-'.join(parts)
+    return voice
+
+# Ensure additional voices are included
+additional_voices = [
+    "nl-NL-ColetteNeural-Female",
+    "nl-NL-MaartenNeural-Male",
+    "sv-SE-SofieNeural-Female",
+    "sv-SE-MattiasNeural-Male",
+    "nb-NO-PernilleNeural-Female",
+    "nb-NO-FinnNeural-Male",
+    "da-DK-ChristelNeural-Female",
+    "da-DK-JeppeNeural-Male",
+    "pl-PL-AgnieszkaNeural-Female",
+    "pl-PL-MarekNeural-Male",
+    "tr-TR-EmelNeural-Female",
+    "tr-TR-AhmetNeural-Male",
+    "hi-IN-SwaraNeural-Female",
+    "hi-IN-MadhurNeural-Male",
+    "th-TH-PremwadeeNeural-Female",
+    "th-TH-NiwatNeural-Male",
+    "vi-VN-HoaiMyNeural-Female",
+    "vi-VN-NamMinhNeural-Male",
+    "id-ID-GadisNeural-Female",
+    "id-ID-ArdiNeural-Male",
+    "ms-MY-YasminNeural-Female",
+    "ms-MY-OsmanNeural-Male",
+]
+for voice in additional_voices:
+    if voice not in tts_voices:
+        tts_voices.append(voice)
+
+# Expand country codes for display
+tts_voices = [expand_country_codes(v) for v in tts_voices]
+
+# Sample sentences for each language
+sample_sentences = {
+    "Arabic": "مرحباً، هذه جملة مثال باللغة العربية.",
+    "Chinese": "你好，这是中文的示例句子。",
+    "Danish": "Hej, dette er en eksempelsætning på dansk.",
+    "Dutch": "Hallo, dit is een voorbeeldzin in het Nederlands.",
+    "English": "Hello, this is a sample sentence in English.",
+    "Finnish": "Hei, tämä on esimerkkilause suomeksi.",
+    "French": "Bonjour, ceci est une phrase d'exemple en français.",
+    "German": "Hallo, dies ist ein Beispielsatz auf Deutsch.",
+    "Greek": "Γεια σας, αυτό είναι ένα δείγμα πρότασης στα ελληνικά.",
+    "Hebrew": "שלום, זהו משפט דוגמה בעברית.",
+    "Hindi": "नमस्ते, यह हिंदी में एक नमूना वाक्य है।",
+    "Indonesian": "Halo, ini adalah kalimat contoh dalam bahasa Indonesia.",
+    "Italian": "Ciao, questa è una frase di esempio in italiano.",
+    "Japanese": "こんにちは、これは日本語のサンプル文です。",
+    "Korean": "안녕하세요, 이것은 한국어 샘플 문장입니다.",
+    "Malay": "Hai, ini adalah ayat contoh dalam bahasa Melayu.",
+    "Norwegian": "Hei, dette er en eksempelsetning på norsk.",
+    "Polish": "Cześć, to jest przykładowe zdanie po polsku.",
+    "Portuguese": "Olá, esta é uma frase de exemplo em português.",
+    "Russian": "Здравствуйте, это пример предложения на русском.",
+    "Spanish": "Hola, esta es una oración de ejemplo en español.",
+    "Swedish": "Hej, detta är en exempelmening på svenska.",
+    "Tamil": "வணக்கம், இது தமிழில் ஒரு மாதிரி வாக்கியம்.",
+    "Thai": "สวัสดี, นี่คือประโยคตัวอย่างในภาษาไทย.",
+    "Turkish": "Merhaba, bu Türkçe bir örnek cümledir.",
+    "Ukrainian": "Привіт, це зразок речення українською.",
+    "Vietnamese": "Xin chào, đây là một câu mẫu bằng tiếng Việt.",
+}
 
 model_root = "weights"
 try:
@@ -328,21 +687,23 @@ except Exception as e:
 # TTS Engine Functions
 def generate_tts_edge(tts_text, tts_voice, speed_str, output_filename):
     """Generate TTS using Edge TTS (free, no API key needed)"""
+    # Convert display name back to short codes for TTS
+    tts_voice = compress_country_codes(tts_voice)
     voice_parts = tts_voice.split("-")
     max_retries = 3
     
     for attempt in range(max_retries):
         try:
             if attempt == 0:
+                voice_name = tts_voice  # Try full name first
+            elif attempt == 1:
                 if len(voice_parts) >= 4:
-                    voice_name = "-".join(voice_parts[:-1])
+                    voice_name = "-".join(voice_parts[:-1])  # Without gender
                 else:
                     voice_name = tts_voice
-            elif attempt == 1:
-                voice_name = tts_voice
             else:
                 if len(voice_parts) >= 3:
-                    voice_name = "-".join(voice_parts[:3])
+                    voice_name = "-".join(voice_parts[:3])  # Language-region only
                 else:
                     voice_name = tts_voice
             
@@ -789,6 +1150,12 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
                 step=1,
                 interactive=True,
             )
+            sample_radio = gr.Radio(
+                label="Sample Sentences",
+                choices=list(sample_sentences.keys()),
+                value=None,
+                interactive=True,
+            )
             tts_text = gr.Textbox(label="Input Text", value="זה משפט ברירת המחדל.")
         with gr.Column():
             but0 = gr.Button("Convert", variant="primary")
@@ -832,6 +1199,13 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
             ],
             [info_text, edge_tts_output, tts_output],
         )
+        # Update text box when sample sentence is selected
+        sample_radio.change(
+            fn=lambda x: sample_sentences.get(x, ""),
+            inputs=sample_radio,
+            outputs=tts_text,
+        )
+    
     # Examples component removed due to Gradio 3.34.0 compatibility issue
     # (causes KeyError: 'dataset' in API info endpoint)
     # with gr.Row():
