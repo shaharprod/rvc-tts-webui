@@ -751,6 +751,28 @@ def _run_edge_tts(communicate, output_filename):
             asyncio.set_event_loop(None)
 
 
+def normalize_speed_percent(speed):
+    """Normalize UI speed input into a safe integer percent in [-100, 100]."""
+    try:
+        speed_value = int(round(float(speed)))
+    except Exception:
+        speed_value = 0
+    return max(-100, min(100, speed_value))
+
+
+def edge_rate_from_speed(speed):
+    """Build Edge TTS-compatible rate string like +10% / -25%."""
+    speed_percent = normalize_speed_percent(speed)
+    return f"{speed_percent:+d}%"
+
+
+def speed_multiplier_from_percent(speed):
+    """Convert percent delta to engine multiplier and clamp to supported ranges."""
+    speed_percent = normalize_speed_percent(speed)
+    speed_value = 1.0 + (speed_percent / 100.0)
+    return max(0.25, min(4.0, speed_value))
+
+
 def generate_tts_edge(tts_text, tts_voice, speed_str, output_filename):
     """Generate TTS using Edge TTS (free, no API key needed)"""
     # Strip gender suffix - Edge TTS expects ShortName only
@@ -831,8 +853,7 @@ def generate_tts_openai(tts_text, tts_voice, speed, api_key, output_filename):
                 if part.lower() in voice_map:
                     voice_name = voice_map[part.lower()]
         
-        speed_value = 1.0 + (speed / 100.0)
-        speed_value = max(0.25, min(4.0, speed_value))
+        speed_value = speed_multiplier_from_percent(speed)
         
         response = client.audio.speech.create(
             model="tts-1",
@@ -884,8 +905,7 @@ def generate_tts_google(tts_text, tts_voice, speed, api_key_json, output_filenam
                 elif "female" in gender or "female" in voice_name.lower():
                     ssml_gender = texttospeech.SsmlVoiceGender.FEMALE
             
-            speed_value = 1.0 + (speed / 100.0)
-            speed_value = max(0.25, min(4.0, speed_value))
+            speed_value = speed_multiplier_from_percent(speed)
             
             synthesis_input = texttospeech.SynthesisInput(text=tts_text)
             
@@ -940,8 +960,7 @@ def generate_tts_elevenlabs(tts_text, tts_voice, speed, api_key, voice_id, outpu
             "xi-api-key": api_key
         }
         
-        speed_value = 1.0 + (speed / 100.0)
-        speed_value = max(0.25, min(4.0, speed_value))
+        speed_value = speed_multiplier_from_percent(speed)
         
         data = {
             "text": tts_text,
@@ -987,6 +1006,7 @@ def tts(
     print(datetime.datetime.now())
     # Convert expanded display name back to original Edge TTS voice name
     tts_voice = get_original_voice(tts_voice)
+    speed = normalize_speed_percent(speed)
     print("tts_text:")
     print(tts_text)
     print(f"tts_voice: {tts_voice}")
@@ -1018,10 +1038,7 @@ def tts(
         temp_output = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False).name
 
         # Format speed string for edge-tts
-        if speed >= 0:
-            speed_str = f"+{speed}%"
-        else:
-            speed_str = f"{speed}%"
+        speed_str = edge_rate_from_speed(speed)
 
         print(f"TTS Engine: {tts_engine}")
         print(f"Text: {tts_text[:50]}...")
