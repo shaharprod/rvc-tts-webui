@@ -120,9 +120,11 @@ except Exception as e:
 edge_output_filename = "edge_output.mp3"
 
 # Try to load TTS voices, fallback to default if fails
+edge_available_shortnames = set()
 try:
     tts_voice_list = asyncio.get_event_loop().run_until_complete(edge_tts.list_voices())
     tts_voices = [f"{v['ShortName']}-{v['Gender']}" for v in tts_voice_list]
+    edge_available_shortnames = {v["ShortName"] for v in tts_voice_list}
     # Ensure Hebrew voices are included even if API works
     hebrew_voices = ["he-IL-AvriNeural-Male", "he-IL-HilaNeural-Female"]
     for voice in hebrew_voices:
@@ -484,6 +486,18 @@ for v in tts_voices:
     display = expand_country_codes(v)
     voice_display_to_original[display] = v
 
+# Keep original voices (non-expanded) for robust runtime fallbacks
+original_tts_voices = sorted(set(voice_display_to_original.values()))
+if not edge_available_shortnames:
+    edge_available_shortnames = {v.rsplit("-", 1)[0] for v in original_tts_voices}
+
+voices_by_language = {}
+for voice in original_tts_voices:
+    parts = voice.split("-")
+    if len(parts) >= 2:
+        lang_prefix = f"{parts[0]}-{parts[1]}"
+        voices_by_language.setdefault(lang_prefix, []).append(voice)
+
 # Sort expanded names alphabetically for the dropdown
 tts_voices = sorted(voice_display_to_original.keys())
 
@@ -740,26 +754,45 @@ def _run_edge_tts(communicate, output_filename):
 def generate_tts_edge(tts_text, tts_voice, speed_str, output_filename):
     """Generate TTS using Edge TTS (free, no API key needed)"""
     # Strip gender suffix - Edge TTS expects ShortName only
-    voice_name = get_edge_voice_name(tts_voice)
+    requested_voice_name = get_edge_voice_name(tts_voice)
     max_retries = 3
     last_error = None
 
-    for attempt in range(max_retries):
-        try:
-            communicate = edge_tts.Communicate(tts_text, voice_name, rate=speed_str)
-            _run_edge_tts(communicate, output_filename)
+    # Build a fallback chain inside the same language (e.g., "de-DE-*")
+    candidates = [requested_voice_name]
+    parts = requested_voice_name.split("-")
+    if len(parts) >= 2:
+        lang_prefix = f"{parts[0]}-{parts[1]}"
+        for candidate_voice in voices_by_language.get(lang_prefix, []):
+            candidate_shortname = get_edge_voice_name(candidate_voice)
+            if candidate_shortname not in candidates:
+                candidates.append(candidate_shortname)
 
-            if os.path.exists(output_filename) and os.path.getsize(output_filename) > 0:
-                return True, None
-            else:
-                last_error = f"Edge TTS produced empty output for voice '{voice_name}'"
+    for voice_name in candidates:
+        if voice_name not in edge_available_shortnames:
+            print(f"  Skipping unavailable voice '{voice_name}'")
+            continue
+
+        for attempt in range(max_retries):
+            try:
+                communicate = edge_tts.Communicate(tts_text, voice_name, rate=speed_str)
+                _run_edge_tts(communicate, output_filename)
+
+                if os.path.exists(output_filename) and os.path.getsize(output_filename) > 0:
+                    if voice_name != requested_voice_name:
+                        print(
+                            f"  Voice fallback applied: '{requested_voice_name}' -> '{voice_name}'"
+                        )
+                    return True, None
+                else:
+                    last_error = f"Edge TTS produced empty output for voice '{voice_name}'"
+                    print(f"  Attempt {attempt+1}: {last_error}")
+            except Exception as e:
+                last_error = f"Edge TTS error (voice='{voice_name}'): {e}"
                 print(f"  Attempt {attempt+1}: {last_error}")
-        except Exception as e:
-            last_error = f"Edge TTS error (voice='{voice_name}'): {e}"
-            print(f"  Attempt {attempt+1}: {last_error}")
 
-        if attempt < max_retries - 1:
-            time.sleep(1)
+            if attempt < max_retries - 1:
+                time.sleep(1)
 
     return False, last_error or "Failed after all retries"
 
