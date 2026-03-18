@@ -773,6 +773,15 @@ def speed_multiplier_from_percent(speed):
     return max(0.25, min(4.0, speed_value))
 
 
+def normalize_pitch_semitones(pitch):
+    """Normalize pitch slider input into a safe integer semitone value."""
+    try:
+        pitch_value = int(round(float(pitch)))
+    except Exception:
+        pitch_value = 0
+    return max(-24, min(24, pitch_value))
+
+
 def generate_tts_edge(tts_text, tts_voice, speed_str, output_filename):
     """Generate TTS using Edge TTS (free, no API key needed)"""
     # Strip gender suffix - Edge TTS expects ShortName only
@@ -1007,6 +1016,7 @@ def tts(
     # Convert expanded display name back to original Edge TTS voice name
     tts_voice = get_original_voice(tts_voice)
     speed = normalize_speed_percent(speed)
+    pitch = normalize_pitch_semitones(pitch)
     print("tts_text:")
     print(tts_text)
     print(f"tts_voice: {tts_voice}")
@@ -1234,8 +1244,8 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="pink")) as app:
                 interactive=True,
             )
             pitch = gr.Slider(
-                minimum=-12,
-                maximum=12,
+                minimum=-24,
+                maximum=24,
                 label="Pitch (semitones)",
                 value=0,
                 step=1,
